@@ -2,47 +2,32 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace SuperSimpleHttpListener
 {
     public class SuperSimpleHttpListener
     {
         public bool IsListening { get; private set; }
-        public HttpListener Listener { get; set; }
+        public TcpListener Listener { get; set; }
 
         public SuperSimpleHttpListener(IConfigurationSection configuration)
         {
-            if (!HttpListener.IsSupported)
-            {
-                throw new NotSupportedException("Windows XP SP2 or Server 2003 is required to use the HttpListener class.");
-            }
-
             // URI prefixes are required,
-            // for example "http://contoso.com:8080/index/".
             if (configuration == null)
             {
                 throw new ArgumentNullException(nameof(configuration));
             }
 
+            string portStr = configuration.GetSection("Port").Value;
+            if (!int.TryParse(portStr, out int port))
+            {
+                throw new ArgumentException($"Invalid {nameof(port)} -> '{portStr}'");
+            }
             // Create a listener.
-            Listener = new HttpListener();
-
-            // Add the prefixes.
-            foreach (KeyValuePair<string, string> s in configuration.GetSection("Adresses").AsEnumerable())
-            {
-                if (!string.IsNullOrWhiteSpace(s.Value))
-                {
-                    Listener.Prefixes.Add(s.Value);
-                }
-            }
-
-            // URI prefixes are required,
-            // for example "http://contoso.com:8080/index/".
-            if (Listener.Prefixes.Count == 0)
-            {
-                throw new ArgumentException($"No valid prefixes in {nameof(configuration)}");
-            }
+            Listener = new TcpListener(localaddr: IPAddress.Any, port: port);
         }
 
         public void StartListening()
@@ -52,28 +37,45 @@ namespace SuperSimpleHttpListener
 
             while (IsListening)
             {
-                // Note: The GetContext method blocks while waiting for a request.
-                HttpListenerContext context = Listener.GetContext();
-                HttpListenerRequest request = context.Request;
-                // Obtain a response object.
-                HttpListenerResponse response = context.Response;
-                // Construct a response.
-                string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
-                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-                // Get a response stream and write the response to it.
-                response.ContentLength64 = buffer.Length;
-                System.IO.Stream output = response.OutputStream;
-                output.Write(buffer, 0, buffer.Length);
-                // You must close the output stream.
-                output.Close();
+                RequestProcessing();
             }
 
             Listener.Stop();
         }
 
+        public async Task RequestProcessing()
+        {
+            TcpClient client = await Listener.AcceptTcpClientAsync();
+
+            // Get a stream object for reading and writing
+            NetworkStream stream = client.GetStream();
+
+            Memory<byte> buffer = new Memory<byte>();
+            int lenght = await stream.ReadAsync(buffer: buffer);
+
+            var data = System.Text.Encoding.ASCII.GetString(buffer.ToArray(), 0, lenght);
+            Console.WriteLine("Received: {0}", data);
+
+            // Process the data sent by the client.
+            data = data.ToUpper();
+
+            byte[] response = data.ToByteArray();
+            await stream.WriteAsync(response, 0, response.Length);
+
+            client.Close();
+        }
+
         public void StopListening()
         {
             IsListening = false;
+        }
+    }
+
+    internal static class HelperTest
+    {
+        public static byte[] ToByteArray(this string data)
+        {
+            return Encoding.UTF8.GetBytes(data);
         }
     }
 }
