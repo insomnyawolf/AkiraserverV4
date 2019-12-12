@@ -16,7 +16,8 @@ namespace SuperSimpleHttpListener
 
             var serverConfig = config.GetSection("Server");
 
-            SuperSimpleHttpListener serv = new SuperSimpleHttpListener(serverConfig);
+            Http.Listener serv = new Http.Listener(serverConfig);
+
             serv.StartListening();
 
             await Task.Delay(-1);
