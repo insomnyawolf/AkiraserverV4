@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SuperSimpleHttpListener.Http.Extensions
+namespace AkiraserverV4.Http.Extensions
 {
     public static class ErrorExtensions
     {

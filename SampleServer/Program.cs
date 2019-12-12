@@ -1,26 +1,28 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using AkiraserverV4.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
-namespace SuperSimpleHttpListener
+namespace SampleServer
 {
     internal static class Program
     {
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-
             var config = LoadConfiguration();
 
             var serverConfig = config.GetSection("Server");
 
-            Http.Listener serv = new Http.Listener(serverConfig);
+            Listener<SampleContext> serv = new Listener<SampleContext>(serverConfig);
 
-            serv.StartListening();
 
-            await Task.Delay(-1);
+            Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) {
+                e.Cancel = true;
+                serv.StopListening();
+            };
+
+            await serv.StartListening();
         }
 
         private static IConfiguration LoadConfiguration()

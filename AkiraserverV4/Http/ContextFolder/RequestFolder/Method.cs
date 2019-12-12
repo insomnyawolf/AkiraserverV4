@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SuperSimpleHttpListener.Http.Request
+namespace AkiraserverV4.Http.ContextFolder.RequestFolder
 {
     public static class HttpMethodConvert
     {

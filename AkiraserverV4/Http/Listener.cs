@@ -1,15 +1,19 @@
-﻿using Microsoft.Extensions.Configuration;
-using SuperSimpleHttpListener.Http.Extensions;
-using SuperSimpleHttpListener.Http.Helper;
+﻿using AkiraserverV4.Http.Anotations;
+using AkiraserverV4.Http.ContextFolder;
+using AkiraserverV4.Http.Extensions;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace SuperSimpleHttpListener.Http
+namespace AkiraserverV4.Http
 {
-    public class Listener
+#warning Temporal Placeholder
+    public class Listener<T> where T : Context, new()
     {
         public bool IsListening { get; private set; }
         public TcpListener TcpListener { get; set; }
@@ -44,7 +48,22 @@ namespace SuperSimpleHttpListener.Http
 
             while (IsListening)
             {
-                await RequestProcessing();
+                try
+                {
+                    await RequestProcessing();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(FormatException(e));
+                    static string FormatException(Exception exception)
+                    {
+                        if (exception.InnerException != null)
+                        {
+                            return $"{exception.Message} -> {FormatException(exception.InnerException)}";
+                        }
+                        return $"{exception.Message}";
+                    }
+                }
             }
 
             TcpListener.Stop();
@@ -69,33 +88,6 @@ namespace SuperSimpleHttpListener.Http
                 return;
             }
 
-            List<byte> buffer = new List<byte>();
-
-            do
-            {
-                const int defaultSize = 8192;
-                byte[] currentBuffer = new byte[defaultSize];
-                int dataRead = await netStream.ReadAsync(buffer: currentBuffer);
-
-                if (dataRead == defaultSize)
-                {
-                    buffer.AddRange(currentBuffer);
-                }
-                else
-                {
-                    byte[] partialBuffer = new byte[dataRead];
-                    Buffer.BlockCopy(currentBuffer, 0, partialBuffer, 0, dataRead);
-                    buffer.AddRange(partialBuffer);
-                }
-            } while (netStream.DataAvailable);
-
-#if DEBUG
-            var data = System.Text.Encoding.ASCII.GetString(buffer.ToArray(), 0, buffer.Count);
-            Console.WriteLine("Received: {0}", data);
-#endif
-
-            Request.Request Request = new Request.Request(buffer.ToArray());
-
             if (!netStream.CanWrite)
             {
                 Console.WriteLine("Can Not Write To The Stream".ToErrorString(this));
@@ -104,15 +96,23 @@ namespace SuperSimpleHttpListener.Http
                 return;
             }
 
-            var response = new Response.Response();
-            response.Body = "Hello World".ToByteArray();
+            using (T context = await ContextBuilder.CreateContext<T>(netStream))
+            {
+#warning Make Routing
+#warning This is a Temporal Placeholder
+                var methods = typeof(T).GetMethods();
 
-            byte[] rawResponse = response.ToBytes();
+                for (int i = 0; i < methods.Length; i++)
+                {
+                    var attrib = methods[i].GetCustomAttribute(typeof(DefaultRoutingAttribute));
 
-            await netStream.WriteAsync(rawResponse, 0, rawResponse.Length);
-            await netStream.FlushAsync();
+                    if (attrib != null)
+                    {
+                        methods[i].Invoke(context, null);
+                    }
+                }
+            }
 
-            netStream.Close();
             client.Close();
         }
 
@@ -120,9 +120,5 @@ namespace SuperSimpleHttpListener.Http
         {
             IsListening = false;
         }
-    }
-
-    internal static class HelperTest
-    {
     }
 }

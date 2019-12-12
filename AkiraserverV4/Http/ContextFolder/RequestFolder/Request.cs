@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SuperSimpleHttpListener.Http.Request
+namespace AkiraserverV4.Http.ContextFolder.RequestFolder
 {
     public class Request
     {
@@ -18,8 +18,7 @@ namespace SuperSimpleHttpListener.Http.Request
 
         public Request(byte[] raw)
         {
-#warning Make this method a parameter to sepparate only n times
-            var requestParts = raw.Separate(HeaderSeparator);
+            var requestParts = raw.Separate(HeaderSeparator, 1);
 
             if (requestParts.Length > 0)
             {

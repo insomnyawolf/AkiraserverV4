@@ -1,15 +1,15 @@
 ﻿using SuperSimpleHttpListener.Http.Helper;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SuperSimpleHttpListener.Http.Response
+namespace AkiraserverV4.Http.ContextFolder.ResponseFolder
 {
     public class Response
     {
         public HttpVersion ProtocolVersion { get; set; }
         public HttpStatus Status { get; set; }
         public Dictionary<string, string> Headers { get; set; }
-        public byte[] Body { get; set; }
         private const string HeaderSeparator = "\r\n";
 
         public Response(HttpStatus status = HttpStatus.Ok, HttpVersion protocolVersion = HttpVersion.HTTP11)
@@ -19,16 +19,13 @@ namespace SuperSimpleHttpListener.Http.Response
             ProtocolVersion = protocolVersion;
         }
 
-        public byte[] ToBytes()
+        public string ProcessHeaders()
         {
-            AddContentLenghtHeader(Body.Length);
-            string headers = ProcessHeaders();
+            if (!Headers.ContainsKey("Content-Length"))
+            {
+                throw new Exception("You must add the content lenght header first");
+            }
 
-            return Data.ConcatByteArrays(headers.ToByteArray(), Body);
-        }
-
-        private string ProcessHeaders()
-        {
             StringBuilder headerBuilder = new StringBuilder();
             headerBuilder.Append(ProtocolVersion.ToVersionrString());
             headerBuilder.Append(Status.ToStatusString());

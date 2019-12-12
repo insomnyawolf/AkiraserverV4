@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace SuperSimpleHttpListener.Http.Response
+namespace AkiraserverV4.Http.ContextFolder.ResponseFolder
 {
     public static class HttpStatusConvert
     {

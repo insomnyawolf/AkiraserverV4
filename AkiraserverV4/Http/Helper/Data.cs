@@ -33,20 +33,26 @@ namespace SuperSimpleHttpListener.Http.Helper
             return Encoding.UTF8.GetBytes(data);
         }
 
-        public static byte[][] Separate(this byte[] source, byte[] separator)
+        public static byte[][] Separate(this byte[] source, byte[] pattern, int? times = null)
         {
             var Parts = new List<byte[]>();
             var Index = 0;
             byte[] Part;
+            int patternIndex = 0;
             for (var I = 0; I < source.Length; ++I)
             {
-                if (PatternEquals(source, separator, I))
+                if (times.HasValue && times.Value < patternIndex)
+                {
+                    break;
+                }
+
+                if (PatternEquals(source, pattern, I))
                 {
                     Part = new byte[I - Index];
                     Array.Copy(source, Index, Part, 0, Part.Length);
                     Parts.Add(Part);
-                    Index = I + separator.Length;
-                    I += separator.Length - 1;
+                    Index = I + pattern.Length;
+                    I += pattern.Length - 1;
                 }
             }
             Part = new byte[source.Length - Index];
