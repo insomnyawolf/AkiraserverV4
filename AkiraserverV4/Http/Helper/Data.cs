@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SuperSimpleHttpListener.Http.Helper
+namespace AkiraserverV4.Http.Helper
 {
     public static class Data
     {

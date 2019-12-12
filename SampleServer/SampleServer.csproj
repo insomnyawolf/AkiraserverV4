@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SuperSimpleHttpListener\AkiraserverV4.csproj" />
+    <ProjectReference Include="..\AkiraserverV4\AkiraserverV4.csproj" />
   </ItemGroup>
 
   <ItemGroup>
