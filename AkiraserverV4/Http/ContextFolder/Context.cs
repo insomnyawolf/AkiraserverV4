@@ -1,17 +1,13 @@
 ﻿using AkiraserverV4.Http.ContextFolder.RequestFolder;
 using AkiraserverV4.Http.ContextFolder.ResponseFolder;
 using AkiraserverV4.Http.Helper;
-using SuperSimpleHttpListener.Http.Helper;
 using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.ContextFolder
 {
-    public abstract class Context : IDisposable
+    public abstract partial class Context : IDisposable
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
@@ -31,6 +27,7 @@ namespace AkiraserverV4.Http.ContextFolder
         }
 
         #region IDisposable Support
+
         private bool disposedValue = false; // Para detectar llamadas redundantes
 
         protected virtual void Dispose(bool disposing)
@@ -68,6 +65,7 @@ namespace AkiraserverV4.Http.ContextFolder
             // TODO: quite la marca de comentario de la siguiente línea si el finalizador se ha reemplazado antes.
             // GC.SuppressFinalize(this);
         }
-        #endregion
+
+        #endregion IDisposable Support
     }
 }

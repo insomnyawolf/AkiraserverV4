@@ -1,9 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using AkiraserverV4.Http.ContextFolder.RequestFolder;
+using System;
 
-namespace AkiraserverV4.Http.Anotations
+namespace AkiraserverV4.Http.ContextFolder
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public sealed class DefaultRoutingAttribute : Attribute { }
+    public abstract partial class Context : IDisposable
+    {
+        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+        public sealed class ControllerAttribute : Attribute
+        {
+            public string Path { get; }
+
+            public ControllerAttribute(string path = null)
+            {
+                Path = path ?? string.Empty;
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public sealed class PostAttribute : BaseEndpointAttribute
+        {
+            public PostAttribute(string path = null) : base(HttpMethod.Post, path)
+            {
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public sealed class GetAttribute : BaseEndpointAttribute
+        {
+            public GetAttribute(string path = null) : base(HttpMethod.Get, path)
+            {
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public sealed class RequestAttribute : BaseEndpointAttribute
+        {
+            public RequestAttribute(string path = null) : base(HttpMethod.Any, path)
+            {
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public sealed class EndpointAttribute : BaseEndpointAttribute
+        {
+            public EndpointAttribute(HttpMethod method, string path = null) : base(method, path)
+            {
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public abstract class BaseEndpointAttribute : Attribute
+        {
+            public HttpMethod Method { get; }
+            public string Path { get; }
+
+            protected BaseEndpointAttribute(HttpMethod method = HttpMethod.Any, string path = null)
+            {
+                Path = path ?? string.Empty;
+                Method = method;
+            }
+        }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public sealed class DefaultEndpointAttribute : Attribute { }
+    }
 }

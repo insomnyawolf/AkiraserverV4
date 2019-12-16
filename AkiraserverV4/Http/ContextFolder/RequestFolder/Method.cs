@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AkiraserverV4.Http.ContextFolder.RequestFolder
+﻿namespace AkiraserverV4.Http.ContextFolder.RequestFolder
 {
     public static class HttpMethodConvert
     {
@@ -17,13 +15,14 @@ namespace AkiraserverV4.Http.ContextFolder.RequestFolder
                 "OPTIONS" => HttpMethod.Options,
                 "TRACE" => HttpMethod.Trace,
                 "PATCH" => HttpMethod.Patch,
-                _ => throw new NotImplementedException($"Method '{raw}' is not implemented.")
+                _ => HttpMethod.Other
             };
         }
     }
 
     public enum HttpMethod
     {
+        Any,
         Get,
         Head,
         Post,
@@ -32,6 +31,7 @@ namespace AkiraserverV4.Http.ContextFolder.RequestFolder
         Connect,
         Options,
         Trace,
-        Patch
+        Patch,
+        Other
     }
 }
