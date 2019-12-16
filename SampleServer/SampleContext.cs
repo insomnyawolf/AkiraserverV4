@@ -1,27 +1,53 @@
-﻿
-using AkiraserverV4.Http.Anotations;
-using AkiraserverV4.Http.ContextFolder;
+﻿using AkiraserverV4.Http.ContextFolder;
+using AkiraserverV4.Http.ContextFolder.RequestFolder;
 using AkiraserverV4.Http.Helper;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SampleServer
 {
+    [Controller]
     public class SampleContext : Context
     {
-        private static int i = 0;
+        public SampleService Service { get; set; }
 
-        [DefaultRouting]
-        public async Task Test()
+        public SampleContext(SampleService service)
         {
-            i++;
-            var test = $"Hola!\nRequest: {i}\n".ToByteArray();
-            var second = JsonSerializer.Serialize(Request.Headers).ToByteArray();
-            Response.AddContentLenghtHeader(test.Length + second.Length);
+            Service = service;
+        }
+
+        [Get("/Count")]
+        public async Task Counter()
+        {
+            byte[] test = $"Hola!\nRequest: {Service.RequestNumber()}".ToByteArray();
+            Response.AddContentLenghtHeader(test.Length);
             await WriteData(test);
+        }
+
+        [Get("/Time")]
+        public async Task Time()
+        {
+            byte[] test = $"Now: '{DateTime.Now}'".ToByteArray();
+            Response.AddContentLenghtHeader(test.Length);
+            await WriteData(test);
+        }
+
+        [Get("/Request")]
+        public async Task RequestMethod()
+        {
+            byte[] second = JsonSerializer.Serialize(Request.Headers).ToByteArray();
+            Response.Status = AkiraserverV4.Http.ContextFolder.ResponseFolder.HttpStatus.NotFound;
+            Response.AddContentLenghtHeader(second.Length);
+            await WriteData(second);
+        }
+
+        [DefaultEndpoint]
+        public async Task SampleFallback()
+        {
+            byte[] second = "404 NotFound".ToByteArray();
+            Response.Status = AkiraserverV4.Http.ContextFolder.ResponseFolder.HttpStatus.NotFound;
+            Response.AddContentLenghtHeader(second.Length);
             await WriteData(second);
         }
     }

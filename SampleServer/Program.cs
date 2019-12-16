@@ -10,14 +10,12 @@ namespace SampleServer
     {
         public static async Task Main(string[] args)
         {
-            var config = LoadConfiguration();
+            ServiceProvider serviceProvider = ConfigureServices();
 
-            var serverConfig = config.GetSection("Server");
+            Listener serv = new Listener(serviceProvider);
 
-            Listener<SampleContext> serv = new Listener<SampleContext>(serverConfig);
-
-
-            Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e) {
+            Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
+            {
                 e.Cancel = true;
                 serv.StopListening();
             };
@@ -25,17 +23,19 @@ namespace SampleServer
             await serv.StartListening();
         }
 
-        private static IConfiguration LoadConfiguration()
+        private static ServiceProvider ConfigureServices()
+        {
+            ServiceCollection services = new ServiceCollection();
+            services.AddSingleton(LoadConfiguration);
+            services.AddSingleton<SampleService>();
+            return services.BuildServiceProvider();
+        }
+
+        private static IConfiguration LoadConfiguration(IServiceProvider arg)
         {
             IConfigurationBuilder builder = new ConfigurationBuilder();
             builder = builder.AddJsonFile("config.json", optional: false, reloadOnChange: true);
             return builder.Build();
-        }
-
-        private static ServiceProvider ConfigureServices()
-        {
-            ServiceCollection services = new ServiceCollection();
-            return services.BuildServiceProvider();
         }
     }
 }
