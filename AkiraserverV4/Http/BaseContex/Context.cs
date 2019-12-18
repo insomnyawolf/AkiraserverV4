@@ -17,13 +17,18 @@ namespace AkiraserverV4.Http.ContextFolder
 
         public async Task WriteData(byte[] data)
         {
+            await WriteHeaders();
+            await NetworkStream.WriteAsync(data, 0, data.Length);
+        }
+
+        public async Task WriteHeaders()
+        {
             if (!HeadersWritten)
             {
                 byte[] headers = Response.ProcessHeaders().ToByteArray();
                 await NetworkStream.WriteAsync(headers, 0, headers.Length);
                 HeadersWritten = true;
             }
-            await NetworkStream.WriteAsync(data, 0, data.Length);
         }
 
         #region IDisposable Support

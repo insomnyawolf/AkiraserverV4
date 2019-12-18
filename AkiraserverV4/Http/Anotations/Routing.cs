@@ -3,7 +3,7 @@ using System;
 
 namespace AkiraserverV4.Http.ContextFolder
 {
-    public abstract partial class Context : IDisposable
+    public abstract partial class Context
     {
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
         public sealed class ControllerAttribute : Attribute

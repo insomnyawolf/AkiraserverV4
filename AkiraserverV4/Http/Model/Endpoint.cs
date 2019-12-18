@@ -9,6 +9,7 @@ namespace AkiraserverV4.Http.Model
     {
         public string Path { get; set; }
         public HttpMethod Method { get; set; }
+        public int Priority { get; set; }
     }
 
     // What to execute

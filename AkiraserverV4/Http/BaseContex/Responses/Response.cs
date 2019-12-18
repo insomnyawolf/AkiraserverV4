@@ -1,5 +1,4 @@
 ﻿using SuperSimpleHttpListener.Http.Helper;
-using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -21,21 +20,25 @@ namespace AkiraserverV4.Http.ContextFolder.ResponseFolder
 
         public string ProcessHeaders()
         {
-            if (!Headers.ContainsKey("Content-Length"))
-            {
-                throw new Exception("You must add the content lenght header first");
-            }
-
             StringBuilder headerBuilder = new StringBuilder();
             headerBuilder.Append(ProtocolVersion.ToVersionrString());
+            headerBuilder.Append(' ');
             headerBuilder.Append(Status.ToStatusString());
             headerBuilder.Append(HeaderSeparator);
 
             foreach (KeyValuePair<string, string> header in Headers)
             {
-                headerBuilder.Append(header.Key);
+                string key = header.Key;
+                string value = header.Value;
+
+                if (key == "Content-Length" && Status == HttpStatus.NoContent)
+                {
+                    value = "0";
+                }
+
+                headerBuilder.Append(key);
                 headerBuilder.Append(": ");
-                headerBuilder.Append(header.Value);
+                headerBuilder.Append(value);
                 headerBuilder.Append(HeaderSeparator);
             }
 
@@ -47,6 +50,11 @@ namespace AkiraserverV4.Http.ContextFolder.ResponseFolder
         public void AddContentLenghtHeader(int lenght)
         {
             Headers.Add("Content-Length", lenght.ToString());
+        }
+
+        public void EnableCrossOriginRequests(string host = "*")
+        {
+            Headers.Add("Access-Control-Allow-Origin", host);
         }
     }
 }
