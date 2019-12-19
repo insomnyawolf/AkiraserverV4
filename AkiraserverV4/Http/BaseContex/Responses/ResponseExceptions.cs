@@ -1,19 +1,6 @@
 ﻿using System;
 
-namespace AkiraserverV4.Http.ContextFolder.ResponseFolder
+namespace AkiraserverV4.Http.BaseContex.Responses
 {
-    public class ContentLenghtHeaderNotFoundException : Exception
-    {
-        public ContentLenghtHeaderNotFoundException(string message) : base(message)
-        {
-        }
 
-        public ContentLenghtHeaderNotFoundException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        public ContentLenghtHeaderNotFoundException()
-        {
-        }
-    }
 }

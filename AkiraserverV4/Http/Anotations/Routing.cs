@@ -1,9 +1,9 @@
-﻿using AkiraserverV4.Http.ContextFolder.RequestFolder;
+﻿using AkiraserverV4.Http.BaseContex.Requests;
 using System;
 
-namespace AkiraserverV4.Http.ContextFolder
+namespace AkiraserverV4.Http.BaseContex
 {
-    public abstract partial class Context
+    public abstract partial class BaseContext
     {
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
         public sealed class ControllerAttribute : Attribute

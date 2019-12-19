@@ -1,13 +1,14 @@
-﻿using AkiraserverV4.Http.ContextFolder.RequestFolder;
-using AkiraserverV4.Http.ContextFolder.ResponseFolder;
+﻿using AkiraserverV4.Http.BaseContex.Requests;
+using AkiraserverV4.Http.BaseContex.Responses;
 using AkiraserverV4.Http.Helper;
 using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace AkiraserverV4.Http.ContextFolder
+namespace AkiraserverV4.Http.BaseContex
 {
-    public abstract partial class Context : IDisposable
+    public abstract partial class BaseContext : IDisposable
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
@@ -19,6 +20,12 @@ namespace AkiraserverV4.Http.ContextFolder
         {
             await WriteHeaders();
             await NetworkStream.WriteAsync(data, 0, data.Length);
+        }
+
+        public async Task WriteData(List<byte> data)
+        {
+            await WriteHeaders();
+            await NetworkStream.WriteAsync(data.ToArray(), 0, data.Count);
         }
 
         public async Task WriteHeaders()

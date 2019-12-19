@@ -1,19 +1,19 @@
-﻿using AkiraserverV4.Http.ContextFolder.RequestFolder;
-using AkiraserverV4.Http.ContextFolder.ResponseFolder;
+﻿using AkiraserverV4.Http.BaseContex.Requests;
+using AkiraserverV4.Http.BaseContex.Responses;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace AkiraserverV4.Http.ContextFolder
+namespace AkiraserverV4.Http.BaseContex
 {
     internal static class ContextBuilder
     {
-        public static async Task<Context> CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
+        public static async Task<BaseContext> CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
         {
-            Type BaseTypeOfContext = typeof(Context);
+            Type BaseTypeOfContext = typeof(BaseContext);
 
-            while (BaseTypeOfContext != typeof(Context))
+            while (BaseTypeOfContext != typeof(BaseContext))
             {
                 BaseTypeOfContext = BaseTypeOfContext.BaseType;
             }
@@ -22,7 +22,7 @@ namespace AkiraserverV4.Http.ContextFolder
             BaseTypeOfContext.GetProperty("NetworkStream").SetValue(obj: Context, value: networkStream);
             BaseTypeOfContext.GetProperty("Request").SetValue(obj: Context, value: request);
             BaseTypeOfContext.GetProperty("Response").SetValue(obj: Context, value: new Response());
-            return (Context)Context;
+            return (BaseContext)Context;
         }
     }
 }

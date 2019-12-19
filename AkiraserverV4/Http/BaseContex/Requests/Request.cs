@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using System.Web;
 
-namespace AkiraserverV4.Http.ContextFolder.RequestFolder
+namespace AkiraserverV4.Http.BaseContex.Requests
 {
     public class Request
     {
@@ -15,20 +15,23 @@ namespace AkiraserverV4.Http.ContextFolder.RequestFolder
         public HttpMethod Method { get; set; }
         public string Path { get; set; }
         public HttpVersion Version { get; set; }
+        public Dictionary<string, string> UrlQuery { get; set; }
         public Dictionary<string, string> Headers { get; set; }
-        public byte[] Body { get; set; }
+        public List<byte> Body { get; set; }
 
-        public Request(byte[] raw)
+        public Request(List<byte> raw)
         {
-            byte[][] requestParts = raw.Separate(HeaderSeparator, 1);
+            List<List<byte>> requestParts = raw.Separate(HeaderSeparator, 1);
 
-            if (requestParts.Length > 0)
+            if (requestParts.Count > 0)
             {
                 Headers = new Dictionary<string, string>();
                 ParseHeaders(requestParts[0]);
             }
 
-            if (requestParts.Length > 1)
+            ParseUrlQuery();
+
+            if (requestParts.Count > 1)
             {
                 Body = requestParts[1];
             }
@@ -36,19 +39,23 @@ namespace AkiraserverV4.Http.ContextFolder.RequestFolder
 
         public Dictionary<string, string> GetUrlEncodedForm()
         {
-            string rawBody = Encoding.UTF8.GetString(Body);
+            string rawBody = Encoding.UTF8.GetString(Body.ToArray());
             return DeserializeUrlEncoded(rawBody);
         }
 
-        public Dictionary<string, string> GetQueryUrl()
+        private void ParseUrlQuery()
         {
             string[] query = Path.Split('?', StringSplitOptions.RemoveEmptyEntries);
 
+            if (query.Length > 0)
+            {
+                Path = query[0];
+            }
+
             if (query.Length > 1)
             {
-                return DeserializeUrlEncoded(query[1]);
+                UrlQuery = DeserializeUrlEncoded(query[1]);
             }
-            return new Dictionary<string, string>();
         }
 
         private Dictionary<string, string> DeserializeUrlEncoded(string raw)
@@ -72,9 +79,9 @@ namespace AkiraserverV4.Http.ContextFolder.RequestFolder
             return result;
         }
 
-        private void ParseHeaders(byte[] rawheaders)
+        private void ParseHeaders(List<byte> rawheaders)
         {
-            StringReader sr = new StringReader(Encoding.UTF8.GetString(rawheaders));
+            StringReader sr = new StringReader(Encoding.UTF8.GetString(rawheaders.ToArray()));
             string[] firstLine = sr.ReadLine().Split(' ');
             Method = HttpMethodConvert.FromString(firstLine[0]);
             Path = firstLine[1];

@@ -1,4 +1,4 @@
-﻿namespace AkiraserverV4.Http.ContextFolder.RequestFolder
+﻿namespace AkiraserverV4.Http.BaseContex.Requests
 {
     public static class HttpMethodConvert
     {

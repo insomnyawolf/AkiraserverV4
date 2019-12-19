@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AkiraserverV4.Http.ContextFolder.ResponseFolder
+namespace AkiraserverV4.Http.BaseContex.Responses
 {
     public class Response
     {

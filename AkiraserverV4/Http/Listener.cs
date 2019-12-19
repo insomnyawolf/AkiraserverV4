@@ -1,9 +1,7 @@
-﻿using AkiraserverV4.Http.ContextFolder;
-using AkiraserverV4.Http.ContextFolder.RequestFolder;
-using AkiraserverV4.Http.ContextFolder.ResponseFolder;
-using AkiraserverV4.Http.Exceptions;
+﻿using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
+using AkiraserverV4.Http.SerializeHelpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -13,7 +11,10 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using static AkiraserverV4.Http.ContextFolder.Context;
+using AkiraserverV4.Http.BaseContex.Requests;
+using AkiraserverV4.Http.BaseContex.Responses;
+using AkiraserverV4.Http.BaseContex;
+using static AkiraserverV4.Http.BaseContex.BaseContext;
 
 namespace AkiraserverV4.Http
 {
@@ -86,31 +87,6 @@ namespace AkiraserverV4.Http
             IsListening = false;
         }
 
-        private async Task<Request> ParseRequest(NetworkStream networkStream)
-        {
-            List<byte> buffer = new List<byte>();
-
-            do
-            {
-                const int defaultSize = 8192;
-                byte[] currentBuffer = new byte[defaultSize];
-                int dataRead = await networkStream.ReadAsync(buffer: currentBuffer);
-
-                if (dataRead == defaultSize)
-                {
-                    buffer.AddRange(currentBuffer);
-                }
-                else
-                {
-                    byte[] partialBuffer = new byte[dataRead];
-                    Buffer.BlockCopy(currentBuffer, 0, partialBuffer, 0, dataRead);
-                    buffer.AddRange(partialBuffer);
-                }
-            } while (networkStream.DataAvailable);
-
-            return new Request(buffer.ToArray());
-        }
-
         private void LoadRouting()
         {
             List<Endpoint> endpoints = new List<Endpoint>();
@@ -140,7 +116,7 @@ namespace AkiraserverV4.Http
                                 MethodExecuted = currentMethod,
                                 Method = endpointAttribute.Method,
                                 Path = path,
-                                Priority = path.Split('/', StringSplitOptions.RemoveEmptyEntries).Length
+                                Priority = CalculatePriority(path)
                             });
                         }
                         else if (defaultEndpointAttribute != null)
@@ -160,6 +136,11 @@ namespace AkiraserverV4.Http
                 }
             }
 
+            static int CalculatePriority(string path)
+            {
+                return path.Length * path.Split('/', StringSplitOptions.RemoveEmptyEntries).Length;
+            };
+
             // Ordena los endpoints de mas especificos a menos especificos
             endpoints.Sort((x, y) =>
             {
@@ -176,6 +157,13 @@ namespace AkiraserverV4.Http
             });
 
             Endpoints = endpoints.ToArray();
+        }
+
+        private class EndpointCount
+        {
+            public string Path { get; set; }
+            public HttpMethod Method { get; set; }
+            public int Count { get; set; }
         }
 
         private void ValidateRouting()
@@ -231,7 +219,6 @@ namespace AkiraserverV4.Http
                 throw new NoDefaultEndpointException();
             }
 
-#if DEBUG
             StringBuilder sb = new StringBuilder();
             sb.Append("Loaded The following Endpoints:\n");
             foreach (Endpoint endpoint in Endpoints)
@@ -239,23 +226,37 @@ namespace AkiraserverV4.Http
                 sb.Append("* Route: '").Append(endpoint.Method).Append(" => ").Append(endpoint.Path).Append("'.\n");
             }
             Console.WriteLine(sb.ToString());
-#endif
         }
 
-        private class EndpointCount
+        private async Task<Request> ParseRequest(NetworkStream networkStream)
         {
-            public string Path { get; set; }
-            public HttpMethod Method { get; set; }
-            public int Count { get; set; }
+            List<byte> buffer = new List<byte>();
+
+            const int defaultSize = 8192;
+            byte[] currentBuffer = new byte[defaultSize];
+
+            int dataRead;
+            while ((dataRead = await networkStream.ReadAsyncWithTimeout(buffer: currentBuffer, offset: 0, count: defaultSize, TimeOut: 250)) > 0)
+            {
+                if (dataRead == defaultSize)
+                {
+                    buffer.AddRange(currentBuffer);
+                }
+                else
+                {
+                    byte[] partialBuffer = new byte[dataRead];
+                    Buffer.BlockCopy(currentBuffer, 0, partialBuffer, 0, dataRead);
+                    buffer.AddRange(partialBuffer);
+                }
+            }
+
+            return new Request(buffer);
         }
 
         public async Task RequestProcessing()
         {
             //Listener.AcceptSocketAsync
             TcpClient client = await TcpListener.AcceptTcpClientAsync();
-            client.NoDelay = true;
-            client.ReceiveTimeout = 250;
-            client.SendTimeout = 250;
 
 #if DEBUG
             Console.WriteLine($"New connection from: {client.Client.RemoteEndPoint}");
@@ -284,31 +285,32 @@ namespace AkiraserverV4.Http
 
             ExecutedCommand executedCommand = RequestedEndpoint(request);
 
-            using (Context context = await ContextBuilder.CreateContext(executedCommand.ClassExecuted, netStream, request, ServiceProvider))
+            using (BaseContext context = await ContextBuilder.CreateContext(executedCommand.ClassExecuted, netStream, request, ServiceProvider))
             {
                 context.Response.EnableCrossOriginRequests();
 
                 if (executedCommand.MethodExecuted.Invoke(context, null) is object data)
                 {
-                    if (data is Task task)
+                    if (data is Task<dynamic> task)
                     {
-                        if (await (dynamic)data is object awaitedData)
-                        {
-                            await context.SendObject(awaitedData);
-                        }
+                        data = await task;
                     }
-                    else
-                    {
-                        await context.SendObject(data);
-                    }
-                }
-                else
-                {
-                    context.Response.Status = HttpStatus.NoContent;
-                    await context.WriteHeaders();
-                }
-            }
 
+                    if (data is JsonResult jsonSerializable)
+                    {
+                        await context.SendJson(jsonSerializable);
+                    }
+                    else if (data is object)
+                    {
+                        await context.SendText(data);
+                    }
+                }
+
+                context.Response.Status = HttpStatus.NoContent;
+                await context.WriteHeaders();
+
+                await context.NetworkStream.FlushAsync();
+            }
             client.Close();
         }
 
@@ -319,7 +321,7 @@ namespace AkiraserverV4.Http
                 Endpoint currentEndpoint = Endpoints[index];
 
                 if (currentEndpoint.Method == request.Method
-                 && request.Path.StartsWith(currentEndpoint.Path, StringComparison.InvariantCultureIgnoreCase))
+                 && request.Path.Equals(currentEndpoint.Path, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return currentEndpoint;
                 }
