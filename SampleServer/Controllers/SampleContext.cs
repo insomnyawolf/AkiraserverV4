@@ -1,5 +1,6 @@
-﻿using AkiraserverV4.Http.ContextFolder;
-using AkiraserverV4.Http.ContextFolder.RequestFolder;
+﻿
+using AkiraserverV4.Http.BaseContex;
+using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.IO;
 using System.Net;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 namespace SampleServer
 {
     [Controller]
-    public class SampleContext : Context
+    public class SampleContext : BaseContext
     {
         public SampleService Service { get; set; }
 
@@ -18,10 +19,29 @@ namespace SampleServer
             Service = service;
         }
 
-        [Get("/Count")]
-        public string Counter()
+        [Get("/[method]")]
+        public string Count()
         {
-            return $"Hola!\nRequest: {Service.RequestNumber()}";
+            return $"Hello!\n{DateTime.Now}\nRequest: {Service.RequestNumber()}";
+        }
+
+        public class SampleClass
+        {
+            public string Text { get; set; }
+            public DateTime CurrentTime { get; set; }
+            public int RequestNumber { get; set; }
+        }
+
+        [Get("/[method]")]
+        public JsonResult CountJson()
+        {
+            var response = new SampleClass()
+            {
+                Text = "Hello!",
+                CurrentTime = DateTime.Now,
+                RequestNumber = Service.RequestNumber()
+            };
+            return new JsonResult(response);
         }
 
         [Get("/[method]")]
@@ -62,10 +82,17 @@ namespace SampleServer
             await WriteData(test);
         }
 
+        [Post("/[method]")]
+        public async Task ReciveResend()
+        {
+            Response.AddContentLenghtHeader(Request.Body.Count);
+            await WriteData(Request.Body);
+        }
+
         [DefaultEndpoint]
         public string SampleFallback()
         {
-            Response.Status = AkiraserverV4.Http.ContextFolder.ResponseFolder.HttpStatus.NotFound;
+            Response.Status = AkiraserverV4.Http.BaseContex.Responses.HttpStatus.NotFound;
             return "404 NotFound";
         }
     }

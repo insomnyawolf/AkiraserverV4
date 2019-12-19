@@ -1,4 +1,4 @@
-﻿using AkiraserverV4.Http.ContextFolder;
+﻿using AkiraserverV4.Http.BaseContex;
 using AkiraserverV4.Http.Helper;
 using System;
 using System.Threading.Tasks;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class Date : Context
+    public class Date : BaseContext
     {
         [Get]
         public string Now()

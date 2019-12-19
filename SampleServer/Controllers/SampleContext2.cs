@@ -1,9 +1,9 @@
-﻿using AkiraserverV4.Http.ContextFolder;
+﻿using AkiraserverV4.Http.BaseContex;
 
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class SampleContext2 : Context
+    public class SampleContext2 : BaseContext
     {
         [Get("/Potato")]
         public string Potato()
