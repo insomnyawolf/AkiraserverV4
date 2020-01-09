@@ -17,7 +17,7 @@ namespace AkiraserverV4.Http.Extensions
             {
                 context.Response.AddContentLenghtHeader(responseBytes.Length);
             }
-            await context.WriteData(responseBytes);
+            await context.WriteDataAsync(responseBytes);
         }
 
         internal static async Task SendRaw(this BaseContext context, object data)
@@ -30,11 +30,9 @@ namespace AkiraserverV4.Http.Extensions
             throw new NotImplementedException();
         }
 
-        internal static async Task SendJson<T>(this BaseContext context, T data) where T: JsonResult
+        internal static async Task SendJson<T>(this BaseContext context, T data) where T : JsonResult
         {
             await context.SendText(data.SerializedJson);
         }
-
-        
     }
 }

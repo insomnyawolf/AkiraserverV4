@@ -14,16 +14,9 @@ namespace AkiraserverV4.Http.Exceptions
         }
     }
 
-    public class NoDefaultEndpointException : Exception
+    public class MultipleMatchException : Exception
     {
-        public NoDefaultEndpointException() : base("Can not find the default routing fallback.")
-        {
-        }
-    }
-
-    public class MultipleDefaultEndpointException : Exception
-    {
-        public MultipleDefaultEndpointException() : base("Multiple default fallbacks found.")
+        public MultipleMatchException(string args) : base($"Only one method can have the '{args}' attribute.")
         {
         }
     }

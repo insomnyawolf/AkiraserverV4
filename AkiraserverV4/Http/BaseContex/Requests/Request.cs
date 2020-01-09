@@ -3,25 +3,52 @@ using SuperSimpleHttpListener.Http.Helper;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace AkiraserverV4.Http.BaseContex.Requests
 {
     public class Request
     {
+        private const int DefaultSize = 8192;
+
         private static readonly byte[] HeaderSeparator = Encoding.UTF8.GetBytes("\r\n\r\n");
 
-        public HttpMethod Method { get; set; }
-        public string Path { get; set; }
-        public HttpVersion Version { get; set; }
-        public Dictionary<string, string> UrlQuery { get; set; }
-        public Dictionary<string, string> Headers { get; set; }
-        public List<byte> Body { get; set; }
+        public NetworkStream NetworkStream { get; }
+        public bool AllRequestReaded { get; private set; }
+        public HttpMethod Method { get; private set; }
+        public string Path { get; private set; }
+        public HttpVersion Version { get; private set; }
+        public Dictionary<string, string> UrlQuery { get; private set; }
+        public Dictionary<string, string> Headers { get; private set; }
+        public List<byte> Body { get; private set; }
 
-        public Request(List<byte> raw)
+        public Request(NetworkStream networkStream)
         {
-            List<List<byte>> requestParts = raw.Separate(HeaderSeparator, 1);
+            if (networkStream is null)
+            {
+                throw new ArgumentNullException(nameof(networkStream));
+            }
+
+            NetworkStream = networkStream;
+            Body = new List<byte>();
+
+            byte[] firstBuffer = new byte[DefaultSize];
+            int dataRead = ReadPacket(firstBuffer).Result;
+
+            if (dataRead != DefaultSize)
+            {
+                byte[] partialBuffer = new byte[dataRead];
+                Buffer.BlockCopy(firstBuffer, 0, partialBuffer, 0, dataRead);
+
+                firstBuffer = partialBuffer;
+                AllRequestReaded = true;
+            }
+
+            List<byte[]> requestParts = firstBuffer.Separate(HeaderSeparator, 1);
 
             if (requestParts.Count > 0)
             {
@@ -33,12 +60,38 @@ namespace AkiraserverV4.Http.BaseContex.Requests
 
             if (requestParts.Count > 1)
             {
-                Body = requestParts[1];
+                Body.AddRange(requestParts[1]);
             }
         }
 
-        public Dictionary<string, string> GetUrlEncodedForm()
+        private async Task ReadRestOfRequest()
         {
+            byte[] currentBuffer = new byte[DefaultSize];
+
+            int dataRead;
+            while ((dataRead = await ReadPacket(currentBuffer)) > 0)
+            {
+                if (dataRead == DefaultSize)
+                {
+                    Body.AddRange(currentBuffer);
+                }
+                else
+                {
+                    byte[] partialBuffer = new byte[dataRead];
+                    Buffer.BlockCopy(currentBuffer, 0, partialBuffer, 0, dataRead);
+                    Body.AddRange(partialBuffer);
+                }
+            }
+        }
+
+        private async Task<int> ReadPacket(byte[] buffer)
+        {
+            return await NetworkStream.ReadAsyncWithTimeout(buffer: buffer, offset: 0, count: DefaultSize, TimeOut: 250);
+        }
+
+        public async Task<Dictionary<string, string>> GetUrlEncodedForm()
+        {
+            await ReadRestOfRequest();
             string rawBody = Encoding.UTF8.GetString(Body.ToArray());
             return DeserializeUrlEncoded(rawBody);
         }
@@ -79,7 +132,7 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             return result;
         }
 
-        private void ParseHeaders(List<byte> rawheaders)
+        private void ParseHeaders(IList<byte> rawheaders)
         {
             StringReader sr = new StringReader(Encoding.UTF8.GetString(rawheaders.ToArray()));
             string[] firstLine = sr.ReadLine().Split(' ');

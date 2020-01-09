@@ -33,13 +33,47 @@ namespace AkiraserverV4.Http.Helper
             return Encoding.UTF8.GetBytes(data);
         }
 
+        public static List<byte[]> Separate(this byte[] source, byte[] pattern, int? times = null)
+        {
+            var Parts = new List<byte[]>();
+
+            byte[] Part;
+            int Index = 0;
+            int patternIndex = 0;
+
+            for (int I = 0; I < source.Length; ++I)
+            {
+                if (times.HasValue && times.Value < patternIndex)
+                {
+                    break;
+                }
+
+                if (PatternEquals(source, pattern, I))
+                {
+                    Part = new byte[I - Index];
+                    Array.Copy(source, Index, Part, 0, Part.Length);
+                    Parts.Add(Part);
+                    Index = I + pattern.Length;
+                    I += pattern.Length - 1;
+                    patternIndex++;
+                }
+            }
+
+            Part = new byte[source.Length - Index];
+            Array.Copy(source, Index, Part, 0, Part.Length);
+            Parts.Add(Part);
+            return Parts;
+        }
+
         public static List<List<byte>> Separate(this List<byte> source, byte[] pattern, int? times = null)
         {
             var Parts = new List<List<byte>>();
-            var Index = 0;
+
             List<byte> Part;
+            int Index = 0;
             int patternIndex = 1;
-            for (var I = 0; I < source.Count; ++I)
+
+            for (int I = 0; I < source.Count; ++I)
             {
                 if (times.HasValue && times.Value < patternIndex)
                 {
@@ -53,15 +87,15 @@ namespace AkiraserverV4.Http.Helper
                     Index = I + pattern.Length;
                     I += pattern.Length - 1;
                     patternIndex++;
-
                 }
             }
+
             Part = source.GetRange(Index, source.Count - Index);
             Parts.Add(Part);
             return Parts;
         }
 
-        private static bool PatternEquals(List<byte> source, byte[] separator, int index)
+        private static bool PatternEquals(IList<byte> source, byte[] separator, int index)
         {
             for (int i = 0; i < separator.Length; ++i)
             {

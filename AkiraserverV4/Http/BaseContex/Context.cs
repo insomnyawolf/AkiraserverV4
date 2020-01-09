@@ -16,19 +16,18 @@ namespace AkiraserverV4.Http.BaseContex
 
         private bool HeadersWritten = false;
 
-        public async Task WriteData(byte[] data)
+        public async Task WriteDataAsync(byte[] data)
         {
-            await WriteHeaders();
+            await WriteHeadersAsync();
             await NetworkStream.WriteAsync(data, 0, data.Length);
         }
 
-        public async Task WriteData(List<byte> data)
+        public async Task WriteDataAsync(List<byte> data)
         {
-            await WriteHeaders();
-            await NetworkStream.WriteAsync(data.ToArray(), 0, data.Count);
+            await WriteDataAsync(data.ToArray());
         }
 
-        public async Task WriteHeaders()
+        public async Task WriteHeadersAsync()
         {
             if (!HeadersWritten)
             {

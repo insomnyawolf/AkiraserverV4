@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AkiraserverV4": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

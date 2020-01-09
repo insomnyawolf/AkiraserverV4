@@ -1,5 +1,4 @@
-﻿
-using AkiraserverV4.Http.BaseContex;
+﻿using AkiraserverV4.Http.BaseContex;
 using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.IO;
@@ -51,6 +50,13 @@ namespace SampleServer
         }
 
         [Get("/[method]")]
+        public void NotAuth()
+        {
+            _ = Request.Path.Length > 0;
+            Response.Status = AkiraserverV4.Http.BaseContex.Responses.HttpStatus.Unauthorized;
+        }
+
+        [Get("/[method]")]
         public async Task<string> TestAsync()
         {
             HttpWebRequest request = WebRequest.CreateHttp("https://konachan.com/post.json?tags=nagishiro_mito");
@@ -79,21 +85,21 @@ namespace SampleServer
 #warning need To Implement This Example
             byte[] test = new byte[2321312];
             Response.AddContentLenghtHeader(test.Length);
-            await WriteData(test);
+            await WriteDataAsync(test);
         }
 
         [Post("/[method]")]
         public async Task ReciveResend()
         {
             Response.AddContentLenghtHeader(Request.Body.Count);
-            await WriteData(Request.Body);
+            await WriteDataAsync(Request.Body);
         }
 
-        [DefaultEndpoint]
+        //[NotFoundEndpoint]
         public string SampleFallback()
         {
             Response.Status = AkiraserverV4.Http.BaseContex.Responses.HttpStatus.NotFound;
-            return "404 NotFound";
+            return "Overwritten";
         }
     }
 }

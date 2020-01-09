@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace SampleServer
@@ -13,6 +14,7 @@ namespace SampleServer
             ServiceProvider serviceProvider = ConfigureServices();
 
             Listener serv = new Listener(serviceProvider);
+            serv.LoadRouting(Assembly.GetExecutingAssembly());
 
             Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
             {

@@ -62,6 +62,9 @@ namespace AkiraserverV4.Http.BaseContex
         }
 
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-        public sealed class DefaultEndpointAttribute : Attribute { }
+        public sealed class NotFoundHandlerAttribute : Attribute { }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        internal sealed class InternalServerErrorHandlerAttribute : Attribute { }
     }
 }
