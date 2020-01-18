@@ -3,7 +3,7 @@ using System;
 
 namespace AkiraserverV4.Http.BaseContex
 {
-    public abstract partial class BaseContext
+    public abstract partial class Context
     {
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
         public sealed class ControllerAttribute : Attribute
@@ -60,6 +60,9 @@ namespace AkiraserverV4.Http.BaseContex
                 Method = method;
             }
         }
+
+        [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+        public sealed class BadRequestAttribute : Attribute { }
 
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
         public sealed class NotFoundHandlerAttribute : Attribute { }

@@ -9,8 +9,15 @@ using System.Text.Json;
 
 namespace AkiraserverV4.Http.BaseContex
 {
-    public class DefaultContext : BaseContext
+    public class DefaultContext : Context
     {
+        [DefaultBadRequestEndpoint]
+        public async Task DefaultBadRequestEndpoint(Exception exception)
+        {
+            Response.Status = HttpStatus.InternalServerError;
+            await JsonSerializer.SerializeAsync(utf8Json: NetworkStream, value: exception);
+        }
+
         [DefaultNotFoundEndpoint]
         public string DefaultNotFoundEndpoint()
         {

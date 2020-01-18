@@ -19,5 +19,11 @@ namespace AkiraserverV4.Http.BaseContex.Requests
 #endif
             return ReciveCount;
         }
+
+
+        public static async Task<int> ReadPacketAsync(this NetworkStream networkStream, byte[] buffer, int packetSize)
+        {
+            return await networkStream.ReadAsyncWithTimeout(buffer: buffer, offset: 0, count: packetSize, TimeOut: networkStream.ReadTimeout);
+        }
     }
 }

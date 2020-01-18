@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class Date : BaseContext
+    public class Date : Context
     {
         [Get]
         public string Now()

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SampleServer
 {
     [Controller]
-    public class SampleContext : BaseContext
+    public class SampleContext : Context
     {
         public SampleService Service { get; set; }
 

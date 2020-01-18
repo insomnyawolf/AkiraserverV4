@@ -9,13 +9,13 @@ namespace AkiraserverV4.Http.BaseContex
 {
     internal static class ContextBuilder
     {
-        public static async Task<BaseContext> CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
+        public static async Task<Context> CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
         {
-            Type BaseTypeOfContext = typeof(BaseContext);
+            Type BaseTypeOfContext = typeof(Context);
 
             int i = 0;
 
-            while (BaseTypeOfContext != typeof(BaseContext))
+            while (BaseTypeOfContext != typeof(Context))
             {
                 i++;
 
@@ -31,7 +31,7 @@ namespace AkiraserverV4.Http.BaseContex
             BaseTypeOfContext.GetProperty("NetworkStream").SetValue(obj: Context, value: networkStream);
             BaseTypeOfContext.GetProperty("Request").SetValue(obj: Context, value: request);
             BaseTypeOfContext.GetProperty("Response").SetValue(obj: Context, value: new Response());
-            return (BaseContext)Context;
+            return (Context)Context;
         }
     }
 

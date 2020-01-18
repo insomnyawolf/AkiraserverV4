@@ -1,6 +1,7 @@
 ﻿using AkiraserverV4.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace SampleServer
         {
             ServiceProvider serviceProvider = ConfigureServices();
 
-            Listener serv = new Listener(serviceProvider);
+            AkiraServerV4 serv = new AkiraServerV4(serviceProvider);
             serv.LoadRouting(Assembly.GetExecutingAssembly());
 
             Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
@@ -30,7 +31,22 @@ namespace SampleServer
             ServiceCollection services = new ServiceCollection();
             services.AddSingleton(LoadConfiguration);
             services.AddSingleton<SampleService>();
+            services.AddScoped(LoggerFactoryConf);
             return services.BuildServiceProvider();
+        }
+
+        private static ILoggerFactory LoggerFactoryConf(IServiceProvider arg)
+        {
+            return LoggerFactory.Create(builder =>
+            {
+                builder
+                    .SetMinimumLevel(LogLevel.Trace)
+                    .AddFilter("Microsoft", LogLevel.Trace)
+                    .AddFilter("System", LogLevel.Trace)
+                    .AddFilter("LoggingConsoleApp.Program", LogLevel.Trace)
+                    .AddConsole()
+                    /*.AddEventLog()*/;
+            });
         }
 
         private static IConfiguration LoadConfiguration(IServiceProvider arg)

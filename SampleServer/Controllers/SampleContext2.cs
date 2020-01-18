@@ -3,7 +3,7 @@
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class SampleContext2 : BaseContext
+    public class SampleContext2 : Context
     {
         [Get("/Potato")]
         public string Potato()

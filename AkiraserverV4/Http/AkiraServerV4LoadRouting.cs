@@ -14,11 +14,12 @@ using System.Threading.Tasks;
 using AkiraserverV4.Http.BaseContex.Requests;
 using AkiraserverV4.Http.BaseContex.Responses;
 using AkiraserverV4.Http.BaseContex;
-using static AkiraserverV4.Http.BaseContex.BaseContext;
+using static AkiraserverV4.Http.BaseContex.Context;
+using Microsoft.Extensions.Logging;
 
 namespace AkiraserverV4.Http
 {
-    public partial class Listener
+    public partial class AkiraServerV4
     {
         private Endpoint[] Endpoints;
 
@@ -43,25 +44,33 @@ namespace AkiraserverV4.Http
                     {
                         MethodInfo currentMethod = methods[methodIndex];
 
-                        if (currentMethod.GetCustomAttribute<NotFoundHandlerAttribute>() != null)
+                        if (currentMethod.GetCustomAttribute<BadRequestAttribute>() != null)
                         {
-                            if (NotFound != null)
+                            if (BadRequestHandler != null)
                             {
                                 throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                             }
-                            NotFound = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
+                            BadRequestHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
+                        }
+                        else if (currentMethod.GetCustomAttribute<NotFoundHandlerAttribute>() != null)
+                        {
+                            if (NotFoundHandler != null)
+                            {
+                                throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
+                            }
+                            NotFoundHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
                         }
                         else if (currentMethod.GetCustomAttribute<InternalServerErrorHandlerAttribute>() != null)
                         {
-                            if (InternalServerError != null)
+                            if (InternalServerErrorHandler != null)
                             {
                                 throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
                             }
-                            InternalServerError = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
+                            InternalServerErrorHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
                         }
                         else if (currentMethod.GetCustomAttribute<BaseEndpointAttribute>() is BaseEndpointAttribute endpointAttribute)
                         {
-                            string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name);
+                            string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
                             string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);
                             string path = controllerPath + methodPath;
                             endpoints.Add(new Endpoint()
@@ -161,9 +170,10 @@ namespace AkiraserverV4.Http
             sb.Append("Loaded The following Endpoints:\n");
             foreach (Endpoint endpoint in endpoints)
             {
-                sb.Append("* Route: '").Append(endpoint.Method).Append(" => ").Append(endpoint.Path).Append("'.\n");
+                sb.Append("\t\t* Route: '").Append(endpoint.Method).Append(" => ").Append(endpoint.Path).Append("'.\n");
             }
-            Console.WriteLine(sb.ToString());
+
+            logger.LogInformation(sb.ToString());
         }
     }
 }

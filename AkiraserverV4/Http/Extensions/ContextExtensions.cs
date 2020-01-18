@@ -8,7 +8,7 @@ namespace AkiraserverV4.Http.Extensions
 {
     internal static class ContextExtensions
     {
-        internal static async Task SendText(this BaseContext context, object text)
+        internal static async Task SendText(this Context context, object text)
         {
 #warning Optimize Already String Inputs
 
@@ -20,17 +20,17 @@ namespace AkiraserverV4.Http.Extensions
             await context.WriteDataAsync(responseBytes);
         }
 
-        internal static async Task SendRaw(this BaseContext context, object data)
+        internal static async Task SendRaw(this Context context, object data)
         {
             throw new NotImplementedException();
         }
 
-        internal static async Task SendObject(this BaseContext context, object data)
+        internal static async Task SendObject(this Context context, object data)
         {
             throw new NotImplementedException();
         }
 
-        internal static async Task SendJson<T>(this BaseContext context, T data) where T : JsonResult
+        internal static async Task SendJson<T>(this Context context, T data) where T : JsonResult
         {
             await context.SendText(data.SerializedJson);
         }

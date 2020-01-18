@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.BaseContex
 {
-    public abstract partial class BaseContext : IDisposable
+    public abstract partial class Context : IDisposable
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
