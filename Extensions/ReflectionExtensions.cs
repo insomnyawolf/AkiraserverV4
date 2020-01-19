@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Extensions
 {
@@ -10,10 +7,10 @@ namespace Extensions
     {
         public static bool IsAsyncMethod(this MethodInfo methodInfo)
         {
-            // Obtain the custom attribute for the method. 
+            // Obtain the custom attribute for the method.
             if (methodInfo.GetCustomAttribute<AsyncStateMachineAttribute>() is null)
             {
-                // Null is returned if the attribute isn't present for the method. 
+                // Null is returned if the attribute isn't present for the method.
                 return false;
             }
             return true;

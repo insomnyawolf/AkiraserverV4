@@ -28,7 +28,7 @@ namespace AkiraserverV4.Http
             for (int methodIndex = 0; methodIndex < methods.Length; methodIndex++)
             {
                 MethodInfo currentMethod = methods[methodIndex];
-                
+
                 // 400 Handler
                 if (currentMethod.GetCustomAttribute<DefaultBadRequestEndpointAttribute>() != null)
                 {

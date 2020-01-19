@@ -1,21 +1,13 @@
-﻿using AkiraserverV4.Http.Exceptions;
-using AkiraserverV4.Http.Extensions;
+﻿using AkiraserverV4.Http.BaseContex.Requests;
+using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Model;
-using AkiraserverV4.Http.SerializeHelpers;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Extensions;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using AkiraserverV4.Http.BaseContex.Requests;
-using AkiraserverV4.Http.BaseContex.Responses;
-using Extensions;
 using static AkiraserverV4.Http.BaseContex.Context;
-using Microsoft.Extensions.Logging;
 
 namespace AkiraserverV4.Http
 {
@@ -149,8 +141,6 @@ namespace AkiraserverV4.Http
                     });
                 }
             }
-
-
 
             StringBuilder error = new StringBuilder();
             for (int i = 0; i < duplicatedCheck.Count; i++)

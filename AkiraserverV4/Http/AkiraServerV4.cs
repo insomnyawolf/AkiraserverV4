@@ -1,16 +1,16 @@
-﻿using AkiraserverV4.Http.Extensions;
+﻿using AkiraserverV4.Http.BaseContex;
+using AkiraserverV4.Http.BaseContex.Requests;
+using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Threading.Tasks;
-using AkiraserverV4.Http.BaseContex.Requests;
-using AkiraserverV4.Http.BaseContex;
-using Microsoft.Extensions.Logging;
-using System.IO;
 
 namespace AkiraserverV4.Http
 {
@@ -93,8 +93,6 @@ namespace AkiraserverV4.Http
             //Listener.AcceptSocketAsync
             using (TcpClient client = await TcpListener.AcceptTcpClientAsync().ConfigureAwait(false))
             {
-
-
                 logger.LogInformation($"New connection from: {client.Client.RemoteEndPoint}");
 
                 // Get a stream object for reading and writing

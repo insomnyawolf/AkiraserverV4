@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace AkiraserverV4.Http.SerializeHelpers
 {
-    public class JsonResult 
+    public class JsonResult
     {
         public object Content { get; set; }
 

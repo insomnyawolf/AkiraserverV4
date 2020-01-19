@@ -1,11 +1,8 @@
 ﻿using AkiraserverV4.Http.BaseContex;
-using AkiraserverV4.Http.Helper;
-using System;
-using System.Threading.Tasks;
-using System.Text.Json;
+using AkiraserverV4.Http.BaseContex.Requests;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using AkiraserverV4.Http.BaseContex.Requests;
+using System.Text.Json;
 
 namespace SampleServer
 {
@@ -26,7 +23,7 @@ namespace SampleServer
             return "Ok\n" + data;
         }
 
-        class RequestData
+        private class RequestData
         {
             public string Path { get; set; }
             public string Method { get; set; }
@@ -39,7 +36,7 @@ namespace SampleServer
                 Method = raw.Method.ToString();
                 Headers = raw.Headers;
                 Data = raw.Body.ToString();
-            } 
+            }
         }
     }
 }
