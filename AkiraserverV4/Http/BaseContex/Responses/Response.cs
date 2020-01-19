@@ -21,7 +21,7 @@ namespace AkiraserverV4.Http.BaseContex.Responses
         public string ProcessHeaders()
         {
             StringBuilder headerBuilder = new StringBuilder();
-            headerBuilder.Append(ProtocolVersion.ToVersionrString());
+            headerBuilder.Append(ProtocolVersion.ToVersionString());
             headerBuilder.Append(' ');
             headerBuilder.Append(Status.ToStatusString());
             headerBuilder.Append(HeaderSeparator);

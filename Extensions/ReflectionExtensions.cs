@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace AkiraserverV4.Http.Extensions
+namespace Extensions
 {
     public static class ReflectionExtensions
     {

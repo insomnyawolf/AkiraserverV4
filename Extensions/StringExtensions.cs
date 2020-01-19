@@ -1,5 +1,5 @@
-﻿namespace AkiraserverV4.Http.Extensions
-{
+﻿namespace Extensions 
+{ 
     public static class StringExtensions
     {
         public static string RemoveAtEnd(this string input, string pattern)

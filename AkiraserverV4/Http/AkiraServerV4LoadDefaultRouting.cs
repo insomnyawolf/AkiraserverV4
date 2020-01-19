@@ -13,13 +13,13 @@ namespace AkiraserverV4.Http
         private ExecutedCommand DefaultInternalServerError { get; set; }
         private ExecutedCommand DefaultBadRequest { get; set; }
 
-        private ExecutedCommand notFound;
-        private ExecutedCommand internalServerError;
-        private ExecutedCommand badRequest;
+        private ExecutedCommand notFoundHandler;
+        private ExecutedCommand internalServerErrorHandler;
+        private ExecutedCommand badRequestHandler;
 
-        private ExecutedCommand NotFoundHandler { get => notFound ?? DefaultNotFound; set => notFound = value; }
-        private ExecutedCommand InternalServerErrorHandler { get => internalServerError ?? DefaultInternalServerError; set => internalServerError = value; }
-        private ExecutedCommand BadRequestHandler { get => badRequest ?? DefaultBadRequest; set => badRequest = value; }
+        private ExecutedCommand NotFoundHandler { get => notFoundHandler ?? DefaultNotFound; set => notFoundHandler = value; }
+        private ExecutedCommand InternalServerErrorHandler { get => internalServerErrorHandler ?? DefaultInternalServerError; set => internalServerErrorHandler = value; }
+        private ExecutedCommand BadRequestHandler { get => badRequestHandler ?? DefaultBadRequest; set => badRequestHandler = value; }
 
         public void LoadDefaultRouting()
         {

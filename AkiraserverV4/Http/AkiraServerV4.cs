@@ -72,7 +72,7 @@ namespace AkiraserverV4.Http
             {
                 try
                 {
-                    await RequestProcessing();
+                    await RequestProcessing().ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -91,7 +91,7 @@ namespace AkiraserverV4.Http
         public async Task RequestProcessing()
         {
             //Listener.AcceptSocketAsync
-            using (TcpClient client = await TcpListener.AcceptTcpClientAsync())
+            using (TcpClient client = await TcpListener.AcceptTcpClientAsync().ConfigureAwait(false))
             {
 
 
@@ -145,7 +145,7 @@ namespace AkiraserverV4.Http
 
                     try
                     {
-                        await InvokeHandlerAsync(context, executedCommand);
+                        await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
                     }
                     catch (IOException)
                     {
@@ -156,13 +156,13 @@ namespace AkiraserverV4.Http
                     catch (Exception ex)
                     {
                         logger.LogError(exception: ex, message: "Internal Server Error");
-                        await InvokeHandlerAsync(context, InternalServerErrorHandler, ex);
+                        await InvokeHandlerAsync(context, InternalServerErrorHandler, ex).ConfigureAwait(false);
                     }
 
                     if (!connectionAborted)
                     {
-                        await context.WriteHeadersAsync();
-                        await context.NetworkStream.FlushAsync();
+                        await context.WriteHeadersAsync().ConfigureAwait(false);
+                        await context.NetworkStream.FlushAsync().ConfigureAwait(false);
                     }
                 }
             }

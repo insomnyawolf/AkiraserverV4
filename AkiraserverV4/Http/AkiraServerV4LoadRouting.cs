@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AkiraserverV4.Http.BaseContex.Requests;
 using AkiraserverV4.Http.BaseContex.Responses;
-using AkiraserverV4.Http.BaseContex;
+using Extensions;
 using static AkiraserverV4.Http.BaseContex.Context;
 using Microsoft.Extensions.Logging;
 
@@ -46,7 +46,7 @@ namespace AkiraserverV4.Http
 
                         if (currentMethod.GetCustomAttribute<BadRequestAttribute>() != null)
                         {
-                            if (BadRequestHandler != null)
+                            if (badRequestHandler != null)
                             {
                                 throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                             }
@@ -54,7 +54,7 @@ namespace AkiraserverV4.Http
                         }
                         else if (currentMethod.GetCustomAttribute<NotFoundHandlerAttribute>() != null)
                         {
-                            if (NotFoundHandler != null)
+                            if (notFoundHandler != null)
                             {
                                 throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                             }
@@ -62,7 +62,7 @@ namespace AkiraserverV4.Http
                         }
                         else if (currentMethod.GetCustomAttribute<InternalServerErrorHandlerAttribute>() != null)
                         {
-                            if (InternalServerErrorHandler != null)
+                            if (internalServerErrorHandler != null)
                             {
                                 throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
                             }
@@ -109,6 +109,8 @@ namespace AkiraserverV4.Http
             ValidateRouting(ref endpoints);
 
             Endpoints = endpoints.ToArray();
+
+            logger.LogInformation(LogRoutingInfo());
         }
 
         private class EndpointCount
@@ -148,32 +150,36 @@ namespace AkiraserverV4.Http
                 }
             }
 
+
+
             StringBuilder error = new StringBuilder();
             for (int i = 0; i < duplicatedCheck.Count; i++)
             {
                 EndpointCount item = duplicatedCheck[i];
                 if (item.Count > 0)
                 {
-                    // $"* Route: '{item.Method} => {item.Path} ' appears '{item.Count + 1}' times ."
-                    error.Append("* Route: '").Append(item.Method).Append(" => ").Append(item.Path).Append(" ' appears '").Append(item.Count + 1).Append("' times .");
+                    // $"* Route: '{item.Method} => {item.Path} ' appears '{item.Count + 1}' times .\n"
+                    error.Append("* Route: '").Append(item.Method).Append(" => ").Append(item.Path).Append(" ' appears '").Append(item.Count + 1).Append("' times .\n");
                 }
             }
 
             string errorString = error.ToString();
-
             if (!string.IsNullOrEmpty(errorString))
             {
                 throw new RoutingException(errorString);
             }
+        }
 
+        private string LogRoutingInfo()
+        {
             StringBuilder sb = new StringBuilder();
             sb.Append("Loaded The following Endpoints:\n");
-            foreach (Endpoint endpoint in endpoints)
+            foreach (Endpoint endpoint in Endpoints)
             {
                 sb.Append("\t\t* Route: '").Append(endpoint.Method).Append(" => ").Append(endpoint.Path).Append("'.\n");
             }
 
-            logger.LogInformation(sb.ToString());
+            return sb.ToString();
         }
     }
 }

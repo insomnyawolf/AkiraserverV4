@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AkiraserverV4.Http.BaseContex.Responses
+﻿namespace AkiraserverV4.Http.BaseContex.Responses
 {
-
+#warning Esto está vacio
 }

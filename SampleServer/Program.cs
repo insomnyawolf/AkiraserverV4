@@ -32,6 +32,7 @@ namespace SampleServer
             services.AddSingleton(LoadConfiguration);
             services.AddSingleton<SampleService>();
             services.AddScoped(LoggerFactoryConf);
+            services.AddLogging();
             return services.BuildServiceProvider();
         }
 

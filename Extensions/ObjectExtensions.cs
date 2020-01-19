@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
-namespace AkiraserverV4.Http.Extensions
+namespace Extensions
 {
     public static class ObjectExtensions
     {
@@ -68,6 +68,11 @@ namespace AkiraserverV4.Http.Extensions
 
             IFormatter formatter = new BinaryFormatter();
             return (TClass)formatter.Deserialize(source);
+        }
+
+        public static TClass[] AsArray<TClass>(this TClass item)
+        {
+            return new TClass[] { item };
         }
     }
 }

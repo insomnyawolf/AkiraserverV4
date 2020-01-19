@@ -56,11 +56,11 @@ namespace AkiraserverV4.Http
             }
             else if (data is JsonResult jsonSerializable)
             {
-                await context.SendJson(jsonSerializable);
+                await context.SendJsonAsync(jsonSerializable).ConfigureAwait(false);
             }
             else if (data is object)
             {
-                await context.SendText(data);
+                await context.SendTextAsync(data).ConfigureAwait(false);
             }
         }
     }

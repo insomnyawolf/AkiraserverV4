@@ -15,7 +15,7 @@ namespace AkiraserverV4.Http.BaseContex
         public async Task DefaultBadRequestEndpoint(Exception exception)
         {
             Response.Status = HttpStatus.InternalServerError;
-            await JsonSerializer.SerializeAsync(utf8Json: NetworkStream, value: exception);
+            await JsonSerializer.SerializeAsync(utf8Json: NetworkStream, value: exception).ConfigureAwait(false);
         }
 
         [DefaultNotFoundEndpoint]
@@ -29,7 +29,7 @@ namespace AkiraserverV4.Http.BaseContex
         public async Task DefaultInternalServerErrorEndpoint(Exception exception)
         {
             Response.Status = HttpStatus.InternalServerError;
-            await JsonSerializer.SerializeAsync(utf8Json: NetworkStream, value: exception);
+            await JsonSerializer.SerializeAsync(utf8Json: NetworkStream, value: exception).ConfigureAwait(false);
         }
     }
 }

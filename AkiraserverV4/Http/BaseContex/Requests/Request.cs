@@ -42,7 +42,7 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             Request request = new Request(networkStream);
 
             byte[] firstBuffer = new byte[DefaultSize];
-            int dataRead = await networkStream.ReadPacketAsync(firstBuffer, DefaultSize);
+            int dataRead = await networkStream.ReadPacketAsync(firstBuffer, DefaultSize).ConfigureAwait(false);
 
             if (dataRead != DefaultSize)
             {
@@ -76,7 +76,7 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             byte[] currentBuffer = new byte[DefaultSize];
 
             int dataRead;
-            while ((dataRead = await NetworkStream.ReadPacketAsync(currentBuffer, DefaultSize)) > 0)
+            while ((dataRead = await NetworkStream.ReadPacketAsync(currentBuffer, DefaultSize).ConfigureAwait(false)) > 0)
             {
                 if (dataRead == DefaultSize)
                 {
@@ -93,7 +93,7 @@ namespace AkiraserverV4.Http.BaseContex.Requests
 
         public async Task<Dictionary<string, string>> GetUrlEncodedForm()
         {
-            await ReadRestOfRequest();
+            await ReadRestOfRequest().ConfigureAwait(false);
             string rawBody = Encoding.UTF8.GetString(Body.ToArray());
             return DeserializeUrlEncoded(rawBody);
         }
@@ -134,11 +134,11 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             return result;
         }
 
-        private void ParseHeaders(IList<byte> rawheaders)
+        private void ParseHeaders(byte[] rawheaders)
         {
-            StringReader sr = new StringReader(Encoding.UTF8.GetString(rawheaders.ToArray()));
+            StringReader sr = new StringReader(Encoding.UTF8.GetString(rawheaders));
             string temp = sr.ReadLine();
-            
+
             if (temp is null)
             {
                 throw new BadRequestException("Empty Request");

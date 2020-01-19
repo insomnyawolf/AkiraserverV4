@@ -15,7 +15,7 @@ namespace SuperSimpleHttpListener.Http.Helper
             };
         }
 
-        public static string ToVersionrString(this HttpVersion version)
+        public static string ToVersionString(this HttpVersion version)
         {
             return version switch
             {

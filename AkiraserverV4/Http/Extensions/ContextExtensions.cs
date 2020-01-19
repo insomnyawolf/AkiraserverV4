@@ -1,5 +1,6 @@
 ﻿using AkiraserverV4.Http.BaseContex;
 using AkiraserverV4.Http.SerializeHelpers;
+using Extensions;
 using System;
 using System.IO;
 using System.Text;
@@ -9,17 +10,17 @@ namespace AkiraserverV4.Http.Extensions
 {
     internal static class ContextExtensions
     {
-        internal static async Task SendText(this Context context, object input)
+        internal static async Task SendTextAsync(this Context context, object input)
         {
             byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
             if (!context.Response.Headers.ContainsKey("Content-Length"))
             {
                 context.Response.AddContentLenghtHeader(responseBytes.Length);
             }
-            await context.WriteDataAsync(responseBytes);
+            await context.WriteDataAsync(responseBytes).ConfigureAwait(false);
         }
 
-        internal static async Task SendRaw(this Context context, object data)
+        internal static async Task SendRawAsync(this Context context, object data)
         {
             using (Stream dataStream = data.ToStream())
             {
@@ -27,13 +28,13 @@ namespace AkiraserverV4.Http.Extensions
                 {
                     context.Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
                 }
-                await context.WriteDataAsync(dataStream);
+                await context.WriteDataAsync(dataStream).ConfigureAwait(false);
             }
         }
 
-        internal static async Task SendJson<T>(this Context context, T data) where T : JsonResult
+        internal static async Task SendJsonAsync<T>(this Context context, T data) where T : JsonResult
         {
-            await context.SendText(data.SerializedJson);
+            await context.SendTextAsync(data.SerializedJson).ConfigureAwait(false);
         }
     }
 }

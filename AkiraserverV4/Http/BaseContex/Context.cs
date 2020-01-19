@@ -19,13 +19,13 @@ namespace AkiraserverV4.Http.BaseContex
 
         public async Task WriteDataAsync(byte[] data)
         {
-            await WriteHeadersAsync();
-            await NetworkStream.WriteAsync(data, 0, data.Length);
+            await WriteHeadersAsync().ConfigureAwait(false);
+            await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
         }
 
         public async Task WriteDataAsync(List<byte> data)
         {
-            await WriteHeadersAsync();
+            await WriteHeadersAsync().ConfigureAwait(false);
 
             for (int position = 0; position < data.Count; position++)
             {
@@ -35,9 +35,9 @@ namespace AkiraserverV4.Http.BaseContex
 
         public async Task WriteDataAsync(Stream data)
         {
-            await WriteHeadersAsync();
+            await WriteHeadersAsync().ConfigureAwait(false);
 
-            await data.CopyToAsync(NetworkStream);
+            await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace AkiraserverV4.Http.BaseContex
             if (!HeadersWritten)
             {
                 byte[] headers = Response.ProcessHeaders().ToByteArray();
-                await NetworkStream.WriteAsync(headers, 0, headers.Length);
+                await NetworkStream.WriteAsync(headers, 0, headers.Length).ConfigureAwait(false);
                 HeadersWritten = true;
             }
         }

@@ -13,17 +13,8 @@ namespace AkiraserverV4.Http.BaseContex
         {
             Type BaseTypeOfContext = typeof(Context);
 
-            int i = 0;
-
             while (BaseTypeOfContext != typeof(Context))
             {
-                i++;
-
-                if (i > 100)
-                {
-                    throw new ControllerDoesNotExtendBaseContextException();
-                }
-
                 BaseTypeOfContext = BaseTypeOfContext.BaseType;
             }
 
@@ -33,25 +24,5 @@ namespace AkiraserverV4.Http.BaseContex
             BaseTypeOfContext.GetProperty("Response").SetValue(obj: Context, value: new Response());
             return (Context)Context;
         }
-    }
-
-    [Serializable]
-    public class ControllerDoesNotExtendBaseContextException : Exception
-    {
-        public ControllerDoesNotExtendBaseContextException()
-        {
-        }
-
-        public ControllerDoesNotExtendBaseContextException(string message) : base(message)
-        {
-        }
-
-        public ControllerDoesNotExtendBaseContextException(string message, Exception inner) : base(message, inner)
-        {
-        }
-
-        protected ControllerDoesNotExtendBaseContextException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 }
