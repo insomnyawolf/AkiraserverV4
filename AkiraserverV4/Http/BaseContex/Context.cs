@@ -3,6 +3,7 @@ using AkiraserverV4.Http.BaseContex.Responses;
 using AkiraserverV4.Http.Helper;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -24,9 +25,25 @@ namespace AkiraserverV4.Http.BaseContex
 
         public async Task WriteDataAsync(List<byte> data)
         {
-            await WriteDataAsync(data.ToArray());
+            await WriteHeadersAsync();
+
+            for (int position = 0; position < data.Count; position++)
+            {
+                NetworkStream.WriteByte(data[position]);
+            }
         }
 
+        public async Task WriteDataAsync(Stream data)
+        {
+            await WriteHeadersAsync();
+
+            await data.CopyToAsync(NetworkStream);
+        }
+
+        /// <summary>
+        /// Writes the current headers into the network stream if they were not written before
+        /// </summary>
+        /// <returns></returns>
         public async Task WriteHeadersAsync()
         {
             if (!HeadersWritten)

@@ -9,7 +9,7 @@ namespace AkiraserverV4.Http.BaseContex
 {
     internal static class ContextBuilder
     {
-        public static async Task<Context> CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
+        public static Context CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
         {
             Type BaseTypeOfContext = typeof(Context);
 

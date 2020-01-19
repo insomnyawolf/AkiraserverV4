@@ -67,6 +67,12 @@ namespace SampleServer
             return await reader.ReadToEndAsync();
         }
 
+        [Get("/[method]")]
+        public async Task TestAsyncEmptyTask()
+        {
+            await Task.Delay(10);
+        }
+
         [Get("/Time")]
         public string Time()
         {

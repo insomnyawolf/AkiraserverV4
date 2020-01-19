@@ -22,6 +22,7 @@ namespace SuperSimpleHttpListener.Http.Helper
                 HttpVersion.HTTP10 => "HTTP/1.0",
                 HttpVersion.HTTP11 => "HTTP/1.1",
                 HttpVersion.HTTP20 => "HTTP/2.0",
+                _ => throw new NotImplementedException($"The version '{version}' is not implemented.")
             };
         }
     }
