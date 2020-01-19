@@ -36,43 +36,48 @@ namespace AkiraserverV4.Http
                     {
                         MethodInfo currentMethod = methods[methodIndex];
 
-                        if (currentMethod.GetCustomAttribute<BadRequestAttribute>() != null)
+                        IEnumerable<Attribute> Attributes = currentMethod.GetCustomAttributes();
+
+                        foreach (Attribute currentAttribute in Attributes)
                         {
-                            if (badRequestHandler != null)
+                            if (currentAttribute is BadRequestAttribute)
                             {
-                                throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
+                                if (badRequestHandler != null)
+                                {
+                                    throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
+                                }
+                                BadRequestHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
                             }
-                            BadRequestHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
-                        }
-                        else if (currentMethod.GetCustomAttribute<NotFoundHandlerAttribute>() != null)
-                        {
-                            if (notFoundHandler != null)
+                            else if (currentAttribute is NotFoundHandlerAttribute)
                             {
-                                throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
+                                if (notFoundHandler != null)
+                                {
+                                    throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
+                                }
+                                NotFoundHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
                             }
-                            NotFoundHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
-                        }
-                        else if (currentMethod.GetCustomAttribute<InternalServerErrorHandlerAttribute>() != null)
-                        {
-                            if (internalServerErrorHandler != null)
+                            else if (currentAttribute is InternalServerErrorHandlerAttribute)
                             {
-                                throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
+                                if (internalServerErrorHandler != null)
+                                {
+                                    throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
+                                }
+                                InternalServerErrorHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
                             }
-                            InternalServerErrorHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
-                        }
-                        else if (currentMethod.GetCustomAttribute<BaseEndpointAttribute>() is BaseEndpointAttribute endpointAttribute)
-                        {
-                            string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
-                            string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);
-                            string path = controllerPath + methodPath;
-                            endpoints.Add(new Endpoint()
+                            else if (currentAttribute is BaseEndpointAttribute endpointAttribute)
                             {
-                                ClassExecuted = currentClass,
-                                MethodExecuted = currentMethod,
-                                Method = endpointAttribute.Method,
-                                Path = path,
-                                Priority = CalculatePriority(path)
-                            });
+                                string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
+                                string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);
+                                string path = controllerPath + methodPath;
+                                endpoints.Add(new Endpoint()
+                                {
+                                    ClassExecuted = currentClass,
+                                    MethodExecuted = currentMethod,
+                                    Method = endpointAttribute.Method,
+                                    Path = path,
+                                    Priority = CalculatePriority(path)
+                                });
+                            }
                         }
                     }
                 }

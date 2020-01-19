@@ -151,10 +151,10 @@ namespace AkiraserverV4.Http
                         // It happens when the client force closes the connection
                         connectionAborted = true;
                     }
-                    catch (Exception ex)
+                    catch (Exception exception)
                     {
-                        logger.LogError(exception: ex, message: "Internal Server Error");
-                        await InvokeHandlerAsync(context, InternalServerErrorHandler, ex).ConfigureAwait(false);
+                        logger.LogError(exception: exception, message: "Internal Server Error");
+                        await InvokeHandlerAsync(context, InternalServerErrorHandler, exception).ConfigureAwait(false);
                     }
 
                     if (!connectionAborted)
