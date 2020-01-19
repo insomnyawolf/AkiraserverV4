@@ -19,8 +19,8 @@ namespace SampleServer
         [NotFoundHandler]
         public string NotFoundHandler()
         {
-            var data = JsonSerializer.Serialize(new RequestData(Request));
-            return "Ok\n" + data;
+            logger.LogInformation("Not Found:", new RequestData(Request));
+            return "OverWritten Not Found Handler";
         }
 
         private class RequestData
