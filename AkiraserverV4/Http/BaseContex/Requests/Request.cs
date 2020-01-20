@@ -23,7 +23,7 @@ namespace AkiraserverV4.Http.BaseContex.Requests
         public HttpVersion Version { get; private set; }
         public Dictionary<string, string> UrlQuery { get; private set; }
         public Dictionary<string, string> Headers { get; private set; }
-        public List<byte> Body { get; private set; }
+        public List<byte> Body { get; }
 
         private Request(NetworkStream networkStream)
         {

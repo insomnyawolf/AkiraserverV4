@@ -7,8 +7,18 @@ namespace SampleServer
     public class Date : Context
     {
         [Get]
-        public string Now()
+        public string Now(bool IsShort, string random)
         {
+            if (IsShort)
+            {
+                return DateTime.Now.ToShortDateString();
+            }
+
+            if (random != null)
+            {
+                return random;
+            }
+
             return DateTime.Now.ToString();
         }
 

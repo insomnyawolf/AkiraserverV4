@@ -3,8 +3,10 @@ using AkiraserverV4.Http.BaseContex.Responses;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using AkiraserverV4.Http.SerializeHelpers;
+using Extensions;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http
@@ -13,7 +15,6 @@ namespace AkiraserverV4.Http
     {
         private async Task InvokeHandlerAsync(Context context, ExecutedCommand executedCommand, Exception exception = null)
         {
-            
             dynamic data = InvokeNamedParams(context, executedCommand, exception);
 
             if (data is Task)
@@ -33,18 +34,22 @@ namespace AkiraserverV4.Http
             await ProcessResponse(context, data);
         }
 
-        private async Task InvokeNamedParams(Context context, ExecutedCommand executedCommand, Exception exception = null)
+        private object InvokeNamedParams(Context context, ExecutedCommand executedCommand, Exception exception = null)
         {
-            var parameters = new Dictionary<string, object>();
-
             if (exception != null)
             {
-                parameters.Add("exception", exception);
+                Dictionary<string, object> exceptions = new Dictionary<string, object>
+                {
+                    { "exception", exception }
+                };
+                return executedCommand.MethodExecuted.InvokeWithNamedParameters(context, exceptions);
             }
 
-            executedCommand.MethodExecuted.InvokeWithNamedParameters(context, parameters);
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters = context.Request.UrlQuery;
+
+            return executedCommand.MethodExecuted.InvokeWithNamedParameters(context, parameters);
         }
-        
 
         private async Task ProcessResponse(Context context, object data)
         {
