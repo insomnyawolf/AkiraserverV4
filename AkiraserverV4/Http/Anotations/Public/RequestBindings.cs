@@ -6,7 +6,10 @@ namespace AkiraserverV4.Http.BaseContex
 {
     public abstract partial class Context
     {
-        [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-        public sealed class InputUrlEncodedFormAttribute : Attribute { }
+        [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = true)]
+        public sealed class InputUrlEncodedFormAttribute : RequestDataBindingAttribute { }
+
+        [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+        public abstract class RequestDataBindingAttribute : Attribute { }
     }
 }

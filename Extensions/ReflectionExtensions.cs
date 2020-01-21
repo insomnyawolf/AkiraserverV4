@@ -35,7 +35,7 @@ namespace Extensions
         /// <returns></returns>
         public static object InvokeWithNamedParameters<T>(this MethodInfo self, object obj, IDictionary<string, T> namedParameters) where T : class
         {
-            var test = self.MapParameters(namedParameters);
+            object[] test = self.MapParameters(namedParameters);
             return self.Invoke(obj, test);
         }
 
@@ -53,10 +53,10 @@ namespace Extensions
             {
                 return parameters;
             }
-            foreach (var item in namedParameters)
+            foreach (KeyValuePair<string, T> item in namedParameters)
             {
-                var paramName = item.Key;
-                var paramIndex = Array.IndexOf(paramNames, paramName);
+                string paramName = item.Key;
+                int paramIndex = Array.IndexOf(paramNames, paramName);
                 if (paramIndex >= 0)
                 {
                     parameters[paramIndex] = paramInfos[paramIndex].ConvertValue(item.Value);
@@ -77,6 +77,8 @@ namespace Extensions
         private static readonly Type TypeBool = typeof(bool);
         private static readonly Type TypeBoolNullable = typeof(bool?);
 
+        private static readonly Type TypeString = typeof(string);
+
         private const string CsvDateFormat = "dd/MM/yyyy";
 
         public static object ConvertValue(this ParameterInfo propertyInfo, object input)
@@ -88,8 +90,12 @@ namespace Extensions
 
             try
             {
+                if (paramType == TypeString && input is null)
+                {
+                    return null;
+                }
                 // Fechas
-                if (paramType == TypeDateTime || paramType == TypeDateTimeNullable)
+                else if (paramType == TypeDateTime || paramType == TypeDateTimeNullable)
                 {
                     bool Sucess = DateTime.TryParseExact(s: inputStr, format: CsvDateFormat, provider: CultureInfo.InvariantCulture, style: DateTimeStyles.None, result: out DateTime Parsed);
                     if (!Sucess && paramType == TypeDateTimeNullable)
