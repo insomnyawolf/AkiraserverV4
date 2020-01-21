@@ -24,6 +24,12 @@ namespace SampleServer
             return $"Hello!\n{DateTime.Now}\nRequest: {Service.RequestNumber()}";
         }
 
+        [Get("/Persona")]
+        public string Tu(string nombre, string apellido)
+        {
+            return $"{nombre} {apellido}";
+        }
+
         public class SampleClass
         {
             public string Text { get; set; }
