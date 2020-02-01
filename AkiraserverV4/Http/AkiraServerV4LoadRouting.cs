@@ -1,4 +1,4 @@
-﻿using AkiraserverV4.Http.BaseContex.Requests;
+﻿using AkiraserverV4.Http.BaseContext.Requests;
 using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Model;
 using Extensions;
@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using static AkiraserverV4.Http.BaseContex.Context;
+using static AkiraserverV4.Http.BaseContext.Context;
 
 namespace AkiraserverV4.Http
 {
@@ -46,7 +46,12 @@ namespace AkiraserverV4.Http
                                 {
                                     throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                                 }
-                                BadRequestHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
+                                BadRequestHandler = new ExecutedCommand() 
+                                { 
+                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
+                                    ClassExecuted = currentClass,
+                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                                };
                             }
                             else if (currentAttribute is NotFoundHandlerAttribute)
                             {
@@ -54,7 +59,12 @@ namespace AkiraserverV4.Http
                                 {
                                     throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                                 }
-                                NotFoundHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
+                                NotFoundHandler = new ExecutedCommand() 
+                                { 
+                                    MethodExecuted = currentMethod.CreateReflectedDelegate(), 
+                                    ClassExecuted = currentClass,
+                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                                };
                             }
                             else if (currentAttribute is InternalServerErrorHandlerAttribute)
                             {
@@ -62,20 +72,27 @@ namespace AkiraserverV4.Http
                                 {
                                     throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
                                 }
-                                InternalServerErrorHandler = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = currentClass };
+                                InternalServerErrorHandler = new ExecutedCommand() 
+                                {
+                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
+                                    ClassExecuted = currentClass,
+                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                                };
                             }
                             else if (currentAttribute is BaseEndpointAttribute endpointAttribute)
                             {
+                                
                                 string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
                                 string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);
                                 string path = controllerPath + methodPath;
                                 endpoints.Add(new Endpoint()
                                 {
                                     ClassExecuted = currentClass,
-                                    MethodExecuted = currentMethod,
+                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
                                     Method = endpointAttribute.Method,
                                     Path = path,
-                                    Priority = CalculatePriority(path)
+                                    Priority = CalculatePriority(path),
+                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
                                 });
                             }
                         }
@@ -107,7 +124,7 @@ namespace AkiraserverV4.Http
 
             Endpoints = endpoints.ToArray();
 
-            logger.LogInformation(LogRoutingInfo());
+            Logger.LogInformation(LogRoutingInfo());
         }
 
         private class EndpointCount

@@ -1,9 +1,9 @@
-﻿using AkiraserverV4.Http.BaseContex.Responses;
+﻿using AkiraserverV4.Http.BaseContext.Responses;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace AkiraserverV4.Http.BaseContex
+namespace AkiraserverV4.Http.BaseContext
 {
     public class DefaultContext : Context
     {

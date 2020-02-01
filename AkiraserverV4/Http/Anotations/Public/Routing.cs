@@ -1,7 +1,7 @@
-﻿using AkiraserverV4.Http.BaseContex.Requests;
+﻿using AkiraserverV4.Http.BaseContext.Requests;
 using System;
 
-namespace AkiraserverV4.Http.BaseContex
+namespace AkiraserverV4.Http.BaseContext
 {
     public abstract partial class Context
     {

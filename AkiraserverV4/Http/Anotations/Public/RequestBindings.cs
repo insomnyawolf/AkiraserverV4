@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AkiraserverV4.Http.BaseContex
+namespace AkiraserverV4.Http.BaseContext
 {
     public abstract partial class Context
     {

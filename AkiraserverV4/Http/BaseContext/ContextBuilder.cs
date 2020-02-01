@@ -1,14 +1,14 @@
-﻿using AkiraserverV4.Http.BaseContex.Requests;
-using AkiraserverV4.Http.BaseContex.Responses;
+﻿using AkiraserverV4.Http.BaseContext.Requests;
+using AkiraserverV4.Http.BaseContext.Responses;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Sockets;
 
-namespace AkiraserverV4.Http.BaseContex
+namespace AkiraserverV4.Http.BaseContext
 {
     internal static class ContextBuilder
     {
-        public static Context CreateContext(Type target, NetworkStream networkStream, Request request, ServiceProvider serviceProvider)
+        public static Context CreateContext(Type target, NetworkStream networkStream, Request request, IServiceProvider serviceProvider)
         {
             Type BaseTypeOfContext = typeof(Context);
 

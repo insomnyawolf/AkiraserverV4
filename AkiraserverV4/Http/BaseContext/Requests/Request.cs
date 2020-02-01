@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace AkiraserverV4.Http.BaseContex.Requests
+namespace AkiraserverV4.Http.BaseContext.Requests
 {
     public class Request
     {
@@ -43,6 +43,11 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             byte[] firstBuffer = new byte[DefaultSize];
             int dataRead = await networkStream.ReadPacketAsync(firstBuffer, DefaultSize).ConfigureAwait(false);
 
+            if (dataRead == -1)
+            {
+                return null;
+            }
+
             if (dataRead != DefaultSize)
             {
                 byte[] partialBuffer = new byte[dataRead];
@@ -57,7 +62,10 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             if (requestParts.Count > 0)
             {
                 request.Headers = new Dictionary<string, string>();
-                request.ParseHeaders(requestParts[0]);
+                if (!request.ParseHeaders(requestParts[0]))
+                {
+                    return null;
+                }
             }
 
             request.ParseUrlQuery();
@@ -133,21 +141,21 @@ namespace AkiraserverV4.Http.BaseContex.Requests
             return result;
         }
 
-        private void ParseHeaders(byte[] rawheaders)
+        private bool ParseHeaders(byte[] rawheaders)
         {
             StringReader sr = new StringReader(Encoding.UTF8.GetString(rawheaders));
             string temp = sr.ReadLine();
 
             if (temp is null)
             {
-                throw new BadRequestException("Empty Request");
+                return false;
             }
 
             string[] firstLine = temp.Split(' ');
 
             if (firstLine.Length != 3)
             {
-                throw new BadRequestException("Malformed Request");
+                return false;
             }
 
             Method = HttpMethodConvert.FromString(firstLine[0]);
@@ -160,10 +168,11 @@ namespace AkiraserverV4.Http.BaseContex.Requests
                 string[] header = currentHeader.Split(": ");
                 if (header.Length != 2)
                 {
-                    throw new ArgumentException($"The header '{currentHeader}' is not valid.");
+                    return false;
                 }
                 Headers.Add(header[0], header[1]);
             }
+            return true;
         }
     }
 }

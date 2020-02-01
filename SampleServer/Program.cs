@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 
 namespace SampleServer
 {
+    // Benchmark Command
+    // gobench -u http://localhost:80/Count -c 10000 -k=true  -t 10
     internal static class Program
     {
         public static async Task Main()
         {
-            ServiceProvider serviceProvider = ConfigureServices();
+            IServiceProvider serviceProvider = ConfigureServices();
 
             AkiraServerV4 serv = new AkiraServerV4(serviceProvider);
             serv.LoadRouting(Assembly.GetExecutingAssembly());
@@ -26,11 +28,11 @@ namespace SampleServer
             await serv.StartListening();
         }
 
-        private static ServiceProvider ConfigureServices()
+        private static IServiceProvider ConfigureServices()
         {
             ServiceCollection services = new ServiceCollection();
             services.AddSingleton(LoadConfiguration);
-            services.AddSingleton<SampleService>();
+            services.AddSingleton<ISampleService, SampleService>();
             services.AddScoped(LoggerFactoryConf);
             services.AddLogging();
             return services.BuildServiceProvider();

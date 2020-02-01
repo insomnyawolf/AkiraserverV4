@@ -1,9 +1,9 @@
-﻿using AkiraserverV4.Http.BaseContex;
+﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Model;
 using System;
 using System.Reflection;
-using static AkiraserverV4.Http.BaseContex.Context;
+using static AkiraserverV4.Http.BaseContext.Context;
 
 namespace AkiraserverV4.Http
 {
@@ -36,7 +36,12 @@ namespace AkiraserverV4.Http
                     {
                         throw new MultipleMatchException(nameof(DefaultBadRequestEndpointAttribute));
                     }
-                    DefaultBadRequest = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = type };
+                    DefaultBadRequest = new ExecutedCommand() 
+                    { 
+                        MethodExecuted = currentMethod.CreateReflectedDelegate(),
+                        ClassExecuted = type,
+                        ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                    };
                 }
                 // 404 Handler
                 if (currentMethod.GetCustomAttribute<DefaultNotFoundEndpointAttribute>() != null)
@@ -45,7 +50,12 @@ namespace AkiraserverV4.Http
                     {
                         throw new MultipleMatchException(nameof(DefaultNotFoundEndpointAttribute));
                     }
-                    DefaultNotFound = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = type };
+                    DefaultNotFound = new ExecutedCommand() 
+                    {
+                        MethodExecuted = currentMethod.CreateReflectedDelegate(),
+                        ClassExecuted = type,
+                        ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                    };
                 }
                 // 500 Handler
                 else if (currentMethod.GetCustomAttribute<DefaultInternalServerErrorEndpointAttribute>() != null)
@@ -54,7 +64,12 @@ namespace AkiraserverV4.Http
                     {
                         throw new MultipleMatchException(nameof(DefaultInternalServerErrorEndpointAttribute));
                     }
-                    DefaultInternalServerError = new ExecutedCommand() { MethodExecuted = currentMethod, ClassExecuted = type };
+                    DefaultInternalServerError = new ExecutedCommand() 
+                    {
+                        MethodExecuted = currentMethod.CreateReflectedDelegate(),
+                        ClassExecuted = type,
+                        ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                    };
                 }
             }
 
