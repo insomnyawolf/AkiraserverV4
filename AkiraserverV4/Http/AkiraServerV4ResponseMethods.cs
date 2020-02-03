@@ -1,5 +1,5 @@
-﻿using AkiraserverV4.Http.BaseContex;
-using AkiraserverV4.Http.BaseContex.Responses;
+﻿using AkiraserverV4.Http.BaseContext;
+using AkiraserverV4.Http.BaseContext.Responses;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using AkiraserverV4.Http.SerializeHelpers;
@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using static AkiraserverV4.Http.DelegateFactory;
 
 namespace AkiraserverV4.Http
 {
@@ -15,13 +16,18 @@ namespace AkiraserverV4.Http
     {
         private async Task InvokeHandlerAsync(Context context, ExecutedCommand executedCommand, Exception exception = null)
         {
+            if (context.NetworkStreamFailed)
+            {
+                return;
+            }
+
             dynamic data = InvokeNamedParams(context, executedCommand, exception);
 
             if (data is Task)
             {
                 await data;
 
-                if (executedCommand.MethodExecuted.ReturnType.IsGenericType)
+                if (executedCommand.ReturnIsGenericType)
                 {
                     data = data.Result;
                 }
@@ -42,13 +48,35 @@ namespace AkiraserverV4.Http
                 {
                     { "exception", exception }
                 };
-                return executedCommand.MethodExecuted.InvokeWithNamedParameters(context, exceptions);
+
+                return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context, parameters: exceptions);
             }
 
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters = context.Request.UrlQuery;
+#warning rework invoke with named params
+            //Dictionary<string, string> parameters = new Dictionary<string, string>();
+            //parameters = context.Request.UrlQuery;
 
-            return executedCommand.MethodExecuted.InvokeWithNamedParameters(context, parameters);
+            return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context, parameters: null);
+        }
+
+        private object Invoke(object methodExecuted, Context context, params object[] parameters)
+        {
+            try
+            {
+                if (methodExecuted is ReflectedDelegate reflectedDelegate)
+                {
+                    return reflectedDelegate(context, parameters);
+                }
+                else if (methodExecuted is ReflectedVoidDelegate action)
+                {
+                    action(context, parameters);
+                }
+            }
+            catch (Exception)
+            {
+                // Exception Handling Middleware
+            }
+            return null;
         }
 
         private async Task ProcessResponse(Context context, object data)

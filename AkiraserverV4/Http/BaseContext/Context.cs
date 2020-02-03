@@ -1,5 +1,5 @@
-﻿using AkiraserverV4.Http.BaseContex.Requests;
-using AkiraserverV4.Http.BaseContex.Responses;
+﻿using AkiraserverV4.Http.BaseContext.Requests;
+using AkiraserverV4.Http.BaseContext.Responses;
 using AkiraserverV4.Http.Helper;
 using System;
 using System.Collections.Generic;
@@ -7,29 +7,50 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace AkiraserverV4.Http.BaseContex
+namespace AkiraserverV4.Http.BaseContext
 {
     public abstract partial class Context : IDisposable
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
         public NetworkStream NetworkStream { get; private set; }
+        public bool NetworkStreamFailed { get; set; }
 
         private bool HeadersWritten = false;
 
         public async Task WriteDataAsync(byte[] data)
         {
             await WriteHeadersAsync().ConfigureAwait(false);
-            await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+
+            try
+            {
+                if (!NetworkStreamFailed)
+                {
+                    await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+                }
+            }
+            catch (IOException)
+            {
+                NetworkStreamFailed = true;
+#warning proper error handling
+            }
         }
 
         public async Task WriteDataAsync(List<byte> data)
         {
             await WriteHeadersAsync().ConfigureAwait(false);
 
-            for (int position = 0; position < data.Count; position++)
+            try
             {
-                NetworkStream.WriteByte(data[position]);
+                for (int position = 0; position < data.Count; position++)
+                {
+                    NetworkStream.WriteByte(data[position]);
+                }
+            }
+            catch (IOException)
+            {
+                NetworkStreamFailed = true;
+#warning proper error handling
             }
         }
 
@@ -37,7 +58,18 @@ namespace AkiraserverV4.Http.BaseContex
         {
             await WriteHeadersAsync().ConfigureAwait(false);
 
-            await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
+            try
+            {
+                if (!NetworkStreamFailed)
+                {
+                    await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
+                }
+            }
+            catch (IOException)
+            {
+                NetworkStreamFailed = true;
+#warning proper error handling
+            }
         }
 
         /// <summary>
@@ -46,10 +78,19 @@ namespace AkiraserverV4.Http.BaseContex
         /// <returns></returns>
         public async Task WriteHeadersAsync()
         {
-            if (!HeadersWritten)
+            if (!HeadersWritten && !NetworkStreamFailed)
             {
                 byte[] headers = Response.ProcessHeaders().ToByteArray();
-                await NetworkStream.WriteAsync(headers, 0, headers.Length).ConfigureAwait(false);
+
+                try
+                {
+                    await NetworkStream.WriteAsync(headers, 0, headers.Length).ConfigureAwait(false);
+                }
+                catch (IOException)
+                {
+                    NetworkStreamFailed = true;
+#warning proper error handling
+                }
                 HeadersWritten = true;
             }
         }

@@ -1,4 +1,4 @@
-﻿using AkiraserverV4.Http.BaseContex;
+﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.IO;
@@ -11,9 +11,9 @@ namespace SampleServer
     [Controller]
     public class SampleContext : Context
     {
-        public SampleService Service { get; set; }
+        public ISampleService Service { get; set; }
 
-        public SampleContext(SampleService service)
+        public SampleContext(ISampleService service)
         {
             Service = service;
         }
@@ -22,6 +22,24 @@ namespace SampleServer
         public string Count()
         {
             return $"Hello!\n{DateTime.Now}\nRequest: {Service.RequestNumber()}";
+        }
+
+        [Get("/[method]")]
+        public double Bench()
+        {
+            return Service.RequestPerSecond();
+        }
+
+        [Get("/[method]")]
+        public void Restart()
+        {
+            Service.RequestRestart();
+        }
+
+        [Get("/Persona")]
+        public string Tu(string nombre, string apellido)
+        {
+            return $"{nombre} {apellido}";
         }
 
         public class SampleClass
@@ -53,7 +71,7 @@ namespace SampleServer
         public void NotAuth()
         {
             _ = Request.Path.Length > 0;
-            Response.Status = AkiraserverV4.Http.BaseContex.Responses.HttpStatus.Unauthorized;
+            Response.Status = AkiraserverV4.Http.BaseContext.Responses.HttpStatus.Unauthorized;
         }
 
         [Get("/[method]")]
@@ -104,7 +122,7 @@ namespace SampleServer
         //[NotFoundEndpoint]
         public string SampleFallback()
         {
-            Response.Status = AkiraserverV4.Http.BaseContex.Responses.HttpStatus.NotFound;
+            Response.Status = AkiraserverV4.Http.BaseContext.Responses.HttpStatus.NotFound;
             return "Overwritten";
         }
     }

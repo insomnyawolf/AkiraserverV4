@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace AkiraserverV4.Http.BaseContex.Requests
+namespace AkiraserverV4.Http.BaseContext.Requests
 {
     public class BadRequestException : Exception
     {
-        public BadRequestException(string message) : base(message)
+        public BadRequestException(string message = null) : base(message)
         {
         }
 
