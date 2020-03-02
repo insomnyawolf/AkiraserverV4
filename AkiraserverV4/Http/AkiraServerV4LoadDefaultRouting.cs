@@ -36,8 +36,8 @@ namespace AkiraserverV4.Http
                     {
                         throw new MultipleMatchException(nameof(DefaultBadRequestEndpointAttribute));
                     }
-                    DefaultBadRequest = new ExecutedCommand() 
-                    { 
+                    DefaultBadRequest = new ExecutedCommand()
+                    {
                         MethodExecuted = currentMethod.CreateReflectedDelegate(),
                         ClassExecuted = type,
                         ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
@@ -50,7 +50,7 @@ namespace AkiraserverV4.Http
                     {
                         throw new MultipleMatchException(nameof(DefaultNotFoundEndpointAttribute));
                     }
-                    DefaultNotFound = new ExecutedCommand() 
+                    DefaultNotFound = new ExecutedCommand()
                     {
                         MethodExecuted = currentMethod.CreateReflectedDelegate(),
                         ClassExecuted = type,
@@ -64,7 +64,7 @@ namespace AkiraserverV4.Http
                     {
                         throw new MultipleMatchException(nameof(DefaultInternalServerErrorEndpointAttribute));
                     }
-                    DefaultInternalServerError = new ExecutedCommand() 
+                    DefaultInternalServerError = new ExecutedCommand()
                     {
                         MethodExecuted = currentMethod.CreateReflectedDelegate(),
                         ClassExecuted = type,

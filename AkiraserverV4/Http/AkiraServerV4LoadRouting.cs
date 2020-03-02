@@ -1,11 +1,13 @@
 ﻿using AkiraserverV4.Http.BaseContext.Requests;
 using AkiraserverV4.Http.Exceptions;
+using AkiraserverV4.Http.Helper;
 using AkiraserverV4.Http.Model;
 using Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using static AkiraserverV4.Http.BaseContext.Context;
 
@@ -46,8 +48,8 @@ namespace AkiraserverV4.Http
                                 {
                                     throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                                 }
-                                BadRequestHandler = new ExecutedCommand() 
-                                { 
+                                BadRequestHandler = new ExecutedCommand()
+                                {
                                     MethodExecuted = currentMethod.CreateReflectedDelegate(),
                                     ClassExecuted = currentClass,
                                     ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
@@ -59,9 +61,9 @@ namespace AkiraserverV4.Http
                                 {
                                     throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
                                 }
-                                NotFoundHandler = new ExecutedCommand() 
-                                { 
-                                    MethodExecuted = currentMethod.CreateReflectedDelegate(), 
+                                NotFoundHandler = new ExecutedCommand()
+                                {
+                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
                                     ClassExecuted = currentClass,
                                     ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
                                 };
@@ -72,7 +74,7 @@ namespace AkiraserverV4.Http
                                 {
                                     throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
                                 }
-                                InternalServerErrorHandler = new ExecutedCommand() 
+                                InternalServerErrorHandler = new ExecutedCommand()
                                 {
                                     MethodExecuted = currentMethod.CreateReflectedDelegate(),
                                     ClassExecuted = currentClass,
@@ -81,7 +83,6 @@ namespace AkiraserverV4.Http
                             }
                             else if (currentAttribute is BaseEndpointAttribute endpointAttribute)
                             {
-                                
                                 string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
                                 string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);
                                 string path = controllerPath + methodPath;
@@ -171,7 +172,7 @@ namespace AkiraserverV4.Http
                 if (item.Count > 0)
                 {
                     // $"* Route: '{item.Method} => {item.Path} ' appears '{item.Count + 1}' times .\n"
-                    error.Append("* Route: '").Append(item.Method).Append(" => ").Append(item.Path).Append(" ' appears '").Append(item.Count + 1).Append("' times .\n");
+                    error.Append("* Route: '").Append(item.Method.Padding(7, position: PaddingPosition.Left)).Append(" => ").Append(item.Path).Append(" ' appears '").Append(item.Count + 1).Append("' times .\n");
                 }
             }
 
@@ -188,7 +189,7 @@ namespace AkiraserverV4.Http
             sb.Append("Loaded The following Endpoints:\n");
             foreach (Endpoint endpoint in Endpoints)
             {
-                sb.Append("\t\t* Route: '").Append(endpoint.Method).Append(" => ").Append(endpoint.Path).Append("'.\n");
+                sb.Append("\t\t* Route: '").Append(endpoint.Method.Padding(7, position: PaddingPosition.Left)).Append(" => ").Append(endpoint.Path).Append("'.\n");
             }
 
             return sb.ToString();

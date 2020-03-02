@@ -5,5 +5,8 @@
     "ReciveTimeout": 100,
     "SendTimeout": 100,
     "Ttl": null
+  },
+  "Logging": {
+
   }
 }

@@ -72,5 +72,31 @@ namespace Extensions
         {
             return new TClass[] { item };
         }
+
+        public static string Padding(this object current, ushort minSize, char character = ' ', PaddingPosition position = PaddingPosition.Right)
+        {
+            string str = current.ToString();
+            if (position == PaddingPosition.Left)
+            {
+                while (str.Length < minSize)
+                {
+                    str = character + str;
+                }
+            }
+            else
+            {
+                while (str.Length < minSize)
+                {
+                    str += character;
+                }
+            }
+            return str;
+        }
+    }
+
+    public enum PaddingPosition
+    {
+        Left,
+        Right
     }
 }
