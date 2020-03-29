@@ -19,9 +19,9 @@ namespace SampleServer
         }
 
         [Get("/[method]")]
-        public string Count()
+        public Task<string> Count()
         {
-            return $"Hello!\n{DateTime.Now}\nRequest: {Service.RequestNumber()}";
+            return Task.FromResult($"Hello!\n{DateTime.Now}\nRequest: {Service.RequestNumber()}");
         }
 
         [Get("/[method]")]

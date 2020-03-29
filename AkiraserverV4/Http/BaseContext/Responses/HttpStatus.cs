@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Immutable;
 
 namespace AkiraserverV4.Http.BaseContext.Responses
 {
     public static class HttpStatusConvert
     {
-        public static readonly ImmutableDictionary<HttpStatus, string> RespStatus = new Dictionary<HttpStatus, string>()
+        public static readonly Dictionary<HttpStatus, string> RespStatus = new Dictionary<HttpStatus, string>()
         {
             // Ok
 
@@ -37,7 +36,7 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             { HttpStatus.NotImplemented, "501 Not Implemented" },
             { HttpStatus.BadGateway, "502 Bad Gateway" },
             { HttpStatus.ServiceUnavailable, "503 Service Unavailable" },
-        }.ToImmutableDictionary();
+        };
 
         public static string ToStatusString(this HttpStatus status)
         {

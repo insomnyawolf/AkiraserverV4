@@ -6,7 +6,6 @@ using AkiraserverV4.Http.SerializeHelpers;
 using Extensions;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading.Tasks;
 using static AkiraserverV4.Http.DelegateFactory;
 
@@ -53,10 +52,11 @@ namespace AkiraserverV4.Http
             }
 
 #warning rework invoke with named params
+            //executedCommand.MethodExecuted.HasProperty
             //Dictionary<string, string> parameters = new Dictionary<string, string>();
             //parameters = context.Request.UrlQuery;
 
-            return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context, parameters: null);
+            return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context);
         }
 
         private object Invoke(object methodExecuted, Context context, params object[] parameters)
