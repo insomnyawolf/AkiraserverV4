@@ -25,7 +25,7 @@ namespace SampleServer
                 serv.StopListening();
             };
 
-            await serv.StartListening();
+            await serv.StartListening().ConfigureAwait(false);
         }
 
         private static IServiceProvider ConfigureServices()
