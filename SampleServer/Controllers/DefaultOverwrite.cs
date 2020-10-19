@@ -16,20 +16,5 @@ namespace SampleServer
         {
             Logger = Program.ServiceProvider.GetRequiredService<ILogger<CustomBaseContext>>();
         }
-
-        private class RequestData
-        {
-            public string Path { get; set; }
-            public string Method { get; set; }
-            public Dictionary<string, string> Headers { get; set; }
-            public string Data { get; set; }
-
-            public RequestData(Request raw)
-            {
-                Path = raw.Path;
-                Method = raw.Method.ToString();
-                Headers = raw.Headers;
-            }
-        }
     }
 }

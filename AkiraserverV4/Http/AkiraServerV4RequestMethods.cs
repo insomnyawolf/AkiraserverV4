@@ -12,7 +12,7 @@ namespace AkiraserverV4.Http
             {
                 Endpoint currentEndpoint = Endpoints[index];
 
-                if (currentEndpoint.Method == request.Method && request.Path.Equals(currentEndpoint.Path, StringComparison.InvariantCultureIgnoreCase))
+                if (currentEndpoint.Method == request.Headers.Method && request.Headers.Path.Equals(currentEndpoint.Path, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return currentEndpoint;
                 }

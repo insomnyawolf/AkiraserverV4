@@ -96,9 +96,9 @@ namespace AkiraserverV4.Http
                         }
                     }
                 }
-                else if (request.Headers.ContainsKey(Header.ContentType))
+                else if (request.Headers.RequestHeaders.ContainsKey(Header.ContentType))
                 {
-                    if (request.Headers[Header.ContentType].StartsWith(JsonDeserialize.ContentType))
+                    if (request.Headers.RequestHeaders[Header.ContentType].StartsWith(JsonDeserialize.ContentType))
                     {
                         parameters[i] = JsonDeserialize.DeSerialize(currentParam.ParameterType, request.ReadStringPayload());
                     }

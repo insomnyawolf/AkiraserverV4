@@ -70,7 +70,7 @@ namespace SampleServer
         [Get("/[method]")]
         public void NotAuth()
         {
-            _ = Request.Path.Length > 0;
+            _ = Request.Headers.Path.Length > 0;
             Response.Status = AkiraserverV4.Http.BaseContext.Responses.HttpStatus.Unauthorized;
         }
 

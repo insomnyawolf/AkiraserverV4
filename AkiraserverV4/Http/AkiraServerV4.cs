@@ -83,7 +83,7 @@ namespace AkiraserverV4.Http
                 }
                 catch (SocketException e)
                 {
-                    Logger.LogCritical(e, "Something Failed On The Listener");
+                    Logger.LogError(e.ToString());
                 }
             }
 
@@ -107,85 +107,87 @@ namespace AkiraserverV4.Http
             {
                 Logger.LogInformation($"New connection from: {client.Client.RemoteEndPoint}");
                 // Get a stream object for reading and writing
-                NetworkStream netStream = client.GetStream();
-
-                // Stream Checks =================================================================
-                if (!netStream.CanRead)
+                using (NetworkStream netStream = client.GetStream())
                 {
-                    Logger.LogCritical("Can Not Read Stream".ToErrorString(this));
-                    netStream.Close();
-                    client.Close();
-                    return;
-                }
 
-                if (!netStream.CanWrite)
-                {
-                    Logger.LogCritical("Can Not Write To The Stream".ToErrorString(this));
-                    netStream.Close();
-                    client.Close();
-                    return;
-                }
-
-                // Stream Checks =================================================================
-
-                ExecutedCommand executedCommand = null;
-                Request request = null;
-                Exception exception = null;
-                try
-                {
-                    request = new Request(netStream, Settings.RequestSettings);
-                }
-                catch (Exception e)
-                {
-                    exception = e;
-                }
-
-                if (request is not null && RequestedEndpoint(request) is ExecutedCommand executedCommand1)
-                {
-                    executedCommand = executedCommand1;
-                }
-
-                using (BaseContext.BaseContext context = ContextBuilder.CreateContext(executedCommand?.ClassExecuted ?? Middleware, netStream, request, ServiceProvider))
-                {
-                    context.Response.EnableCrossOriginRequests();
-
-                    bool connectionAborted = false;
-
-
-
-                    if (request is null)
+                    // Stream Checks =================================================================
+                    if (!netStream.CanRead)
                     {
-                        context.Response.Body = await context.BadRequest(exception).ConfigureAwait(false);
+                        Logger.LogCritical("Can Not Read Stream".ToErrorString(this));
+                        netStream.Close();
+                        client.Close();
+                        return;
                     }
-                    else if (executedCommand is null)
+
+                    if (!netStream.CanWrite)
                     {
-                        context.Response.Body = await context.NotFound(request).ConfigureAwait(false);
+                        Logger.LogCritical("Can Not Write To The Stream".ToErrorString(this));
+                        netStream.Close();
+                        client.Close();
+                        return;
                     }
-                    else
+
+                    // Stream Checks =================================================================
+
+                    ExecutedCommand executedCommand = null;
+                    Request request = null;
+                    Exception exception = null;
+                    try
                     {
-                        try
+                        request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
+                    }
+                    catch (Exception e)
+                    {
+                        exception = e;
+                    }
+
+                    if (request is not null && RequestedEndpoint(request) is ExecutedCommand executedCommand1)
+                    {
+                        executedCommand = executedCommand1;
+                    }
+
+                    using (BaseContext.BaseContext context = ContextBuilder.CreateContext(executedCommand?.ClassExecuted ?? Middleware, netStream, request, ServiceProvider))
+                    {
+                        context.Response.EnableCrossOriginRequests();
+
+                        bool connectionAborted = false;
+
+
+
+                        if (request is null)
                         {
+                            context.Response.Body = await context.BadRequest(exception).ConfigureAwait(false);
+                        }
+                        else if (executedCommand is null)
+                        {
+                            context.Response.Body = await context.NotFound(request).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            try
+                            {
 #warning Fix This
-                            context.Response.Body = await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
+                                context.Response.Body = await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
+                            }
+                            catch (IOException)
+                            {
+                                // Not really important
+                                // It happens when the client force closes the connection
+                                connectionAborted = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                context.Response.Body = await context.InternalServerError(ex).ConfigureAwait(false);
+                            }
                         }
-                        catch (IOException)
-                        {
-                            // Not really important
-                            // It happens when the client force closes the connection
-                            connectionAborted = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            context.Response.Body = await context.InternalServerError(ex).ConfigureAwait(false);
-                        }
-                    }
 
 
-                    if (!connectionAborted)
-                    {
-                        await context.WriteHeadersAsync().ConfigureAwait(false);
-                        await context.WriteBodyAsync().ConfigureAwait(false);
-                        await context.NetworkStream.FlushAsync().ConfigureAwait(false);
+                        if (!connectionAborted)
+                        {
+                            await context.WriteHeadersAsync().ConfigureAwait(false);
+                            await context.WriteBodyAsync().ConfigureAwait(false);
+                            await context.NetworkStream.FlushAsync().ConfigureAwait(false);
+                        }
                     }
                 }
             }

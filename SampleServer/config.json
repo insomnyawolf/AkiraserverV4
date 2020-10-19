@@ -3,13 +3,13 @@
     "Port": 80,
     "ExclusiveAddressUse": false,
     "Ttl": 128,
-    "UseOnlyOverlappedIO": true,
+    "UseOnlyOverlappedIO": false,
     "RequestSettings": {
-      "ReciveTimeout": 200,
+      "ReciveTimeout": 50,
       "ReadPacketSize": 8192
     },
     "ResponseSettings": {
-      "SendTimeout": 200
+      "SendTimeout": 50
     }
   },
   "Logging": {

@@ -18,35 +18,19 @@ namespace AkiraserverV4.Http.BaseContext.Requests
 {
     public partial class Request
     {
-        private const string HeaderDelimiter = "\r\n\r\n";
         private MemoryStream ReadRawPayload()
         {
-            RequestStream.Position = 0;
-            RequestStream.Position = SeekToDelimiter(RequestStream, HeaderDelimiter);
-            return RequestStream;
-        }
-
-        private static long SeekToDelimiter(MemoryStream stream, string delimiter)
-        {
-            char[] HeaderDelimiterBytes = delimiter.ToCharArray();
-            char[] checkGroup = new char[HeaderDelimiterBytes.Length];
-
-            // ReadByte - we're working with binary file...
-            while (stream.Position < stream.Length)
+            if (BodyBegginingPosition == null)
             {
-                for (int i = 1; i < checkGroup.Length; i++)
-                {
-                    checkGroup[i - 1] = checkGroup[i];
-                }
-
-                checkGroup[^1] = (char)stream.ReadByte();
-
-                if (HeaderDelimiterBytes.SequenceEqual(checkGroup))
-                {
-                    return stream.Position;
-                }
+                BodyBegginingPosition = FindBodyBegginingPosition(RequestStream);
             }
-            return -1;
+            if (BodyBegginingPosition < 0)
+            {
+                return null;
+            }
+
+            RequestStream.Position = BodyBegginingPosition.Value;
+            return RequestStream;
         }
 
         public string ReadStringPayload()
@@ -64,7 +48,7 @@ namespace AkiraserverV4.Http.BaseContext.Requests
 
         public T ReadXmlPayload<T>()
         {
-            return (T)new XmlSerializer(typeof(T)).Deserialize(NetworkStream);
+            return (T)new XmlSerializer(typeof(T)).Deserialize(ReadRawPayload());
         }
 
         public Form ReadUrlEncodedPayload()

@@ -50,38 +50,7 @@ namespace AkiraserverV4.Http.BaseContext
 
         public async Task WriteDataAsync(byte[] data)
         {
-            await WriteHeadersAsync().ConfigureAwait(false);
-
-            try
-            {
-                if (!NetworkStreamFailed)
-                {
-                    await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
-                }
-            }
-            catch (IOException)
-            {
-                NetworkStreamFailed = true;
-#warning proper error handling
-            }
-        }
-
-        public async Task WriteDataAsync(List<byte> data)
-        {
-            await WriteHeadersAsync().ConfigureAwait(false);
-
-            try
-            {
-                for (int position = 0; position < data.Count; position++)
-                {
-                    NetworkStream.WriteByte(data[position]);
-                }
-            }
-            catch (IOException)
-            {
-                NetworkStreamFailed = true;
-#warning proper error handling
-            }
+            await WriteDataAsync(new MemoryStream(data)).ConfigureAwait(false);
         }
 
         public async Task WriteDataAsync(Stream data)
