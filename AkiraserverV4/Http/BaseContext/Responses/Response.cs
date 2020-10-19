@@ -10,6 +10,7 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         public HttpStatus Status { get; set; }
         public Dictionary<string, string> Headers { get; set; }
         private const string HeaderSeparator = "\r\n";
+        public object Body;
 
         public Response(HttpStatus status = HttpStatus.Ok, HttpVersion protocolVersion = HttpVersion.HTTP11)
         {

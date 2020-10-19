@@ -1,22 +1,48 @@
 ﻿using AkiraserverV4.Http.BaseContext.Requests;
 using AkiraserverV4.Http.BaseContext.Responses;
 using AkiraserverV4.Http.Helper;
+using AkiraserverV4.Http.SerializeHelpers;
+using Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.BaseContext
 {
-    public abstract partial class Context : IDisposable
+    public abstract partial class Ctx : IDisposable
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
         public NetworkStream NetworkStream { get; private set; }
         public bool NetworkStreamFailed { get; set; }
 
-        private bool HeadersWritten = false;
+        private bool HeadersWritten;
+
+        public Ctx() { }
+
+        internal async Task WriteBodyAsync()
+        {
+            var data = Response.Body;
+            if (data is null)
+            {
+                if (Response.Status == HttpStatus.Ok)
+                {
+                    Response.Status = HttpStatus.NoContent;
+                }
+            }
+            else if (data is JsonResult jsonSerializable)
+            {
+                await SendJsonAsync(jsonSerializable).ConfigureAwait(false);
+            }
+            else if (data is object)
+            {
+                await SendTextAsync(data).ConfigureAwait(false);
+            }
+        }
 
         public async Task WriteDataAsync(byte[] data)
         {
@@ -93,6 +119,33 @@ namespace AkiraserverV4.Http.BaseContext
                 }
                 HeadersWritten = true;
             }
+        }
+
+        internal async Task SendTextAsync(object input)
+        {
+            byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
+            if (!Response.Headers.ContainsKey("Content-Length"))
+            {
+                Response.AddContentLenghtHeader(responseBytes.Length);
+            }
+            await WriteDataAsync(responseBytes).ConfigureAwait(false);
+        }
+
+        internal async Task SendRawAsync(object data)
+        {
+            using (Stream dataStream = data.ToStream())
+            {
+                if (!Response.Headers.ContainsKey("Content-Length"))
+                {
+                    Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
+                }
+                await WriteDataAsync(dataStream).ConfigureAwait(false);
+            }
+        }
+
+        internal async Task SendJsonAsync<T>(T data) where T : JsonResult
+        {
+            await SendTextAsync(data.SerializedJson).ConfigureAwait(false);
         }
 
         #region IDisposable Support

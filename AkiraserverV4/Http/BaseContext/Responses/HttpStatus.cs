@@ -29,6 +29,7 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             { HttpStatus.PaymentRequired, "402 Payment Required" },
             { HttpStatus.Forbidden, "403 Forbidden" },
             { HttpStatus.NotFound, "404 Not Found" },
+            { HttpStatus.ImTeapot, "418 I'm a teapot" },
 
             // Server Error
 
@@ -73,6 +74,7 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         PaymentRequired = 402,
         Forbidden = 403,
         NotFound = 404,
+        ImTeapot = 418,
 
         // Server Error
 

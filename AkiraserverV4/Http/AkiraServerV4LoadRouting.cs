@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using static AkiraserverV4.Http.BaseContext.Context;
+using static AkiraserverV4.Http.BaseContext.Ctx;
 
 namespace AkiraserverV4.Http
 {
@@ -42,46 +42,7 @@ namespace AkiraserverV4.Http
 
                         foreach (Attribute currentAttribute in Attributes)
                         {
-                            if (currentAttribute is BadRequestAttribute)
-                            {
-                                if (badRequestHandler != null)
-                                {
-                                    throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
-                                }
-                                BadRequestHandler = new ExecutedCommand()
-                                {
-                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
-                                    ClassExecuted = currentClass,
-                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
-                                };
-                            }
-                            else if (currentAttribute is NotFoundHandlerAttribute)
-                            {
-                                if (notFoundHandler != null)
-                                {
-                                    throw new MultipleMatchException(nameof(NotFoundHandlerAttribute));
-                                }
-                                NotFoundHandler = new ExecutedCommand()
-                                {
-                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
-                                    ClassExecuted = currentClass,
-                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
-                                };
-                            }
-                            else if (currentAttribute is InternalServerErrorHandlerAttribute)
-                            {
-                                if (internalServerErrorHandler != null)
-                                {
-                                    throw new MultipleMatchException(nameof(InternalServerErrorHandlerAttribute));
-                                }
-                                InternalServerErrorHandler = new ExecutedCommand()
-                                {
-                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
-                                    ClassExecuted = currentClass,
-                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
-                                };
-                            }
-                            else if (currentAttribute is BaseEndpointAttribute endpointAttribute)
+                            if (currentAttribute is BaseEndpointAttribute endpointAttribute)
                             {
                                 string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
                                 string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);

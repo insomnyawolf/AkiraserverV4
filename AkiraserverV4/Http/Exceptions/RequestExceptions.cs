@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AkiraserverV4.Http.BaseContext.Requests
+namespace AkiraserverV4.Http.Exceptions
 {
     public class BadRequestException : Exception
     {

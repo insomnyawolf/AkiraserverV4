@@ -13,11 +13,11 @@ namespace AkiraserverV4.Http
 {
     public partial class AkiraServerV4
     {
-        private async Task InvokeHandlerAsync(Context context, ExecutedCommand executedCommand, Exception exception = null)
+        private static async Task<object> InvokeHandlerAsync(BaseContext.Ctx context, ExecutedCommand executedCommand, Exception exception = null)
         {
             if (context.NetworkStreamFailed)
             {
-                return;
+                return null;
             }
 
             dynamic data = InvokeNamedParams(context, executedCommand, exception);
@@ -36,21 +36,11 @@ namespace AkiraserverV4.Http
                 }
             }
 
-            await ProcessResponse(context, data);
+            return data;
         }
 
-        private object InvokeNamedParams(Context context, ExecutedCommand executedCommand, Exception exception = null)
+        private static object InvokeNamedParams(BaseContext.Ctx context, ExecutedCommand executedCommand, Exception exception = null)
         {
-            if (exception != null)
-            {
-                Dictionary<string, object> exceptions = new Dictionary<string, object>
-                {
-                    { "exception", exception }
-                };
-
-                return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context, parameters: exceptions);
-            }
-
 #warning rework invoke with named params
             //executedCommand.MethodExecuted.HasProperty
             //Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -59,43 +49,17 @@ namespace AkiraserverV4.Http
             return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context);
         }
 
-        private object Invoke(object methodExecuted, Context context, params object[] parameters)
+        private static object Invoke(object methodExecuted, BaseContext.Ctx context, params object[] parameters)
         {
-            try
+            if (methodExecuted is ReflectedDelegate reflectedDelegate)
             {
-                if (methodExecuted is ReflectedDelegate reflectedDelegate)
-                {
-                    return reflectedDelegate(context, parameters);
-                }
-                else if (methodExecuted is ReflectedVoidDelegate action)
-                {
-                    action(context, parameters);
-                }
+                return reflectedDelegate(context, parameters);
             }
-            catch (Exception)
+            else if (methodExecuted is ReflectedVoidDelegate action)
             {
-                // Exception Handling Middleware
+                action(context, parameters);
             }
             return null;
-        }
-
-        private async Task ProcessResponse(Context context, object data)
-        {
-            if (data is null)
-            {
-                if (context.Response.Status == HttpStatus.Ok)
-                {
-                    context.Response.Status = HttpStatus.NoContent;
-                }
-            }
-            else if (data is JsonResult jsonSerializable)
-            {
-                await context.SendJsonAsync(jsonSerializable).ConfigureAwait(false);
-            }
-            else if (data is object)
-            {
-                await context.SendTextAsync(data).ConfigureAwait(false);
-            }
         }
     }
 }

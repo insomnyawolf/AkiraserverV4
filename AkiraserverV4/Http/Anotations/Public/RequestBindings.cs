@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AkiraserverV4.Http.BaseContext
 {
-    public abstract partial class Context
+    public abstract partial class Ctx
     {
         [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = true)]
         public sealed class InputUrlEncodedFormAttribute : RequestDataBindingAttribute { }

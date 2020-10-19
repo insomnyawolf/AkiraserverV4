@@ -3,7 +3,7 @@ using System;
 
 namespace AkiraserverV4.Http.BaseContext
 {
-    public abstract partial class Context
+    public abstract partial class Ctx
     {
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
         public sealed class ControllerAttribute : Attribute

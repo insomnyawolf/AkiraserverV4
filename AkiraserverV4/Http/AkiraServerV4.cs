@@ -1,5 +1,6 @@
 ﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.BaseContext.Requests;
+using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,7 @@ namespace AkiraserverV4.Http
         private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
         private readonly IConfigurationSection Configuration;
+        private Type Middleware;
 
         public AkiraServerV4(IServiceProvider serviceProvider)
         {
@@ -38,7 +40,7 @@ namespace AkiraserverV4.Http
                 throw new ArgumentException($"Invalid {nameof(Port)} -> '{Port}'");
             }
 
-            LoadDefaultRouting();
+            SetMiddleware<BaseContext.BaseContext>();
 
             TcpListener = new TcpListener(localaddr: IPAddress.Any, port: _Port);
 
@@ -135,6 +137,11 @@ namespace AkiraserverV4.Http
             IsListening = false;
         }
 
+        public void SetMiddleware<T>() where T : BaseContext.BaseContext
+        {
+            Middleware = typeof(T);
+        }
+
         public async Task RequestProcessing()
         {
             //Listener.AcceptSocketAsync
@@ -163,46 +170,64 @@ namespace AkiraserverV4.Http
 
                 // Stream Checks =================================================================
 
-                ExecutedCommand executedCommand;
-                Request request = await Request.ParseRequest(netStream);
-                if (request is null)
+                ExecutedCommand executedCommand = null;
+                Request request = null;
+                Exception exception = null;
+                try
                 {
-                    executedCommand = BadRequestHandler;
+                    request = await Request.ParseRequest(netStream);
                 }
-                else if (RequestedEndpoint(request) is ExecutedCommand executedCommand1)
+                catch (Exception e)
+                {
+                    exception = e;
+                }
+
+                if (request is not null && RequestedEndpoint(request) is ExecutedCommand executedCommand1)
                 {
                     executedCommand = executedCommand1;
                 }
-                else
-                {
-                    executedCommand = NotFoundHandler;
-                }
 
-                using (Context context = ContextBuilder.CreateContext(executedCommand.ClassExecuted, netStream, request, ServiceProvider))
+                using (BaseContext.BaseContext context = ContextBuilder.CreateContext(executedCommand?.ClassExecuted ?? Middleware, netStream, request, ServiceProvider))
                 {
                     context.Response.EnableCrossOriginRequests();
 
                     bool connectionAborted = false;
 
-                    try
+                    
+
+                    if (request is null)
                     {
-                        await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
+                        context.Response.Body = await context.BadRequest(exception).ConfigureAwait(false);
                     }
-                    catch (IOException)
+                    else if (executedCommand is null)
                     {
-                        // Not really important
-                        // It happens when the client force closes the connection
-                        connectionAborted = true;
+                        context.Response.Body = await context.NotFound(request).ConfigureAwait(false);
                     }
-                    catch (Exception exception)
+                    else
                     {
-                        Logger.LogError(exception: exception, message: "Internal Server Error");
-                        await InvokeHandlerAsync(context, InternalServerErrorHandler, exception).ConfigureAwait(false);
+                        try
+                        {
+#warning Fix This
+                            context.Response.Body = await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
+                        }
+                        catch (IOException)
+                        {
+                            // Not really important
+                            // It happens when the client force closes the connection
+                            connectionAborted = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(exception: ex, message: "Internal Server Error");
+                            context.Response.Body = await context.InternalServerError(ex).ConfigureAwait(false);
+                        }
                     }
+                    
 
                     if (!connectionAborted)
                     {
                         await context.WriteHeadersAsync().ConfigureAwait(false);
+                        await context.WriteBodyAsync().ConfigureAwait(false);
                         await context.NetworkStream.FlushAsync().ConfigureAwait(false);
                     }
                 }
