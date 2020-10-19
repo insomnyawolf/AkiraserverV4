@@ -23,7 +23,7 @@ namespace AkiraserverV4.Http
 
         private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
-        private readonly IConfigurationSection Configuration;
+        private readonly GeneralSettings Settings;
         private Type Middleware;
 
         public AkiraServerV4(IServiceProvider serviceProvider)
@@ -32,64 +32,22 @@ namespace AkiraserverV4.Http
 
             Logger = ServiceProvider.GetRequiredService<ILoggerFactory>()?.CreateLogger<AkiraServerV4>();
 
-            Configuration = serviceProvider.GetRequiredService<IConfiguration>().GetSection("Server");
-
-            string Port = Configuration.GetSection(nameof(Port)).Value;
-            if (!int.TryParse(Port, out int _Port))
-            {
-                throw new ArgumentException($"Invalid {nameof(Port)} -> '{Port}'");
-            }
+            Settings = serviceProvider.GetRequiredService<IConfiguration>().GetSection("Server").Get<GeneralSettings>();
 
             SetMiddleware<BaseContext.BaseContext>();
 
-            TcpListener = new TcpListener(localaddr: IPAddress.Any, port: _Port);
+            TcpListener = new TcpListener(localaddr: IPAddress.Any, port: Settings.Port);
 
             ReloadServerConfig();
         }
 
         public void ReloadServerConfig()
         {
-            string ExclusiveAddressUse = Configuration.GetSection(nameof(ExclusiveAddressUse)).Value;
-            if (bool.TryParse(ExclusiveAddressUse, out bool _ExclusiveAddressUse))
-            {
-                TcpListener.Server.ExclusiveAddressUse = _ExclusiveAddressUse;
-            }
-            else if (!string.IsNullOrEmpty(ExclusiveAddressUse))
-            {
-                throw new ArgumentException($"Invalid {nameof(ExclusiveAddressUse)} -> '{ExclusiveAddressUse}'");
-            }
-
-            string ReciveTimeout = Configuration.GetSection(nameof(ReciveTimeout)).Value;
-            if (int.TryParse(ReciveTimeout, out int _ReciveTimeout))
-            {
-                TcpListener.Server.ReceiveTimeout = _ReciveTimeout;
-            }
-            else if (!string.IsNullOrEmpty(ReciveTimeout))
-            {
-                throw new ArgumentException($"Invalid {nameof(ReciveTimeout)} -> '{ReciveTimeout}'");
-            }
-
-            string SendTimeout = Configuration.GetSection(nameof(SendTimeout)).Value;
-            if (int.TryParse(SendTimeout, out int _SendTimeout))
-            {
-                TcpListener.Server.ReceiveTimeout = _SendTimeout;
-            }
-            else if (!string.IsNullOrEmpty(SendTimeout))
-            {
-                throw new ArgumentException($"Invalid {nameof(SendTimeout)} -> '{SendTimeout}'");
-            }
-
-            string Ttl = Configuration.GetSection(nameof(Ttl)).Value;
-            if (short.TryParse(Ttl, out short _Ttl))
-            {
-                TcpListener.Server.Ttl = _Ttl;
-            }
-            else if (!string.IsNullOrEmpty(Ttl))
-            {
-                throw new ArgumentException($"Invalid {nameof(Ttl)} -> '{Ttl}'");
-            }
-
-            TcpListener.Server.UseOnlyOverlappedIO = true;
+            TcpListener.Server.ExclusiveAddressUse = Settings.ExclusiveAddressUse;
+            TcpListener.Server.ReceiveTimeout = Settings.RequestSettings.ReciveTimeout;
+            TcpListener.Server.SendTimeout = Settings.ResponseSettings.SendTimeout;
+            TcpListener.Server.Ttl = Settings.Ttl;
+            TcpListener.Server.UseOnlyOverlappedIO = Settings.UseOnlyOverlappedIO;
             //TcpListener.Server.Blocking = false;
         }
 
@@ -123,7 +81,7 @@ namespace AkiraserverV4.Http
                 {
                     await RequestProcessing().ConfigureAwait(false);
                 }
-                catch (Exception e)
+                catch (SocketException e)
                 {
                     Logger.LogCritical(e, "Something Failed On The Listener");
                 }
@@ -175,7 +133,7 @@ namespace AkiraserverV4.Http
                 Exception exception = null;
                 try
                 {
-                    request = await Request.ParseRequest(netStream);
+                    request = new Request(netStream, Settings.RequestSettings);
                 }
                 catch (Exception e)
                 {
@@ -193,7 +151,7 @@ namespace AkiraserverV4.Http
 
                     bool connectionAborted = false;
 
-                    
+
 
                     if (request is null)
                     {
@@ -218,11 +176,10 @@ namespace AkiraserverV4.Http
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError(exception: ex, message: "Internal Server Error");
                             context.Response.Body = await context.InternalServerError(ex).ConfigureAwait(false);
                         }
                     }
-                    
+
 
                     if (!connectionAborted)
                     {

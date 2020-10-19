@@ -26,44 +26,44 @@ namespace Extensions
             return type.GetProperty(propertyName) != null;
         }
 
-        /// <summary>
-        /// https://stackoverflow.com/questions/13071805/dynamic-invoke-of-a-method-using-named-parameters
-        /// </summary>
-        /// <param name="self"></param>
-        /// <param name="obj"></param>
-        /// <param name="namedParameters"></param>
-        /// <returns></returns>
-        public static object InvokeWithNamedParameters<T>(this MethodInfo self, object obj, IDictionary<string, T> namedParameters) where T : class
-        {
-            object[] test = self.MapParameters(namedParameters);
-            return self.Invoke(obj, test);
-        }
+        ///// <summary>
+        ///// https://stackoverflow.com/questions/13071805/dynamic-invoke-of-a-method-using-named-parameters
+        ///// </summary>
+        ///// <param name="self"></param>
+        ///// <param name="obj"></param>
+        ///// <param name="namedParameters"></param>
+        ///// <returns></returns>
+        //public static object InvokeWithNamedParameters<T>(this MethodInfo self, object obj, IDictionary<string, T> namedParameters) where T : class
+        //{
+        //    object[] test = self.MapParameters(namedParameters);
+        //    return self.Invoke(obj, test);
+        //}
 
-        public static object[] MapParameters<T>(this MethodInfo method, IDictionary<string, T> namedParameters) where T : class
-        {
-            ParameterInfo[] paramInfos = method.GetParameters().ToArray();
-            string[] paramNames = paramInfos.Select(p => p.Name).ToArray();
-            object[] parameters = new object[paramNames.Length];
-            for (int i = 0; i < parameters.Length; ++i)
-            {
-                parameters[i] = paramInfos[i].ConvertValue(default);
-            }
+        //public static object[] MapParameters<T>(this MethodInfo method, IDictionary<string, T> namedParameters) where T : class
+        //{
+        //    ParameterInfo[] paramInfos = method.GetParameters().ToArray();
+        //    string[] paramNames = paramInfos.Select(p => p.Name).ToArray();
+        //    object[] parameters = new object[paramNames.Length];
+        //    for (int i = 0; i < parameters.Length; ++i)
+        //    {
+        //        parameters[i] = paramInfos[i].ConvertValue(default);
+        //    }
 
-            if (namedParameters is null)
-            {
-                return parameters;
-            }
-            foreach (KeyValuePair<string, T> item in namedParameters)
-            {
-                string paramName = item.Key;
-                int paramIndex = Array.IndexOf(paramNames, paramName);
-                if (paramIndex >= 0)
-                {
-                    parameters[paramIndex] = paramInfos[paramIndex].ConvertValue(item.Value);
-                }
-            }
-            return parameters;
-        }
+        //    if (namedParameters is null)
+        //    {
+        //        return parameters;
+        //    }
+        //    foreach (KeyValuePair<string, T> item in namedParameters)
+        //    {
+        //        string paramName = item.Key;
+        //        int paramIndex = Array.IndexOf(paramNames, paramName);
+        //        if (paramIndex >= 0)
+        //        {
+        //            parameters[paramIndex] = paramInfos[paramIndex].ConvertValue(item.Value);
+        //        }
+        //    }
+        //    return parameters;
+        //}
 
         private static readonly Type TypeDateTime = typeof(DateTime);
         private static readonly Type TypeDateTimeNullable = typeof(DateTime?);

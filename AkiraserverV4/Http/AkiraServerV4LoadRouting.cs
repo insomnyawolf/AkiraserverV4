@@ -50,6 +50,7 @@ namespace AkiraserverV4.Http
                                 endpoints.Add(new Endpoint()
                                 {
                                     ClassExecuted = currentClass,
+                                    MethodInfo = currentMethod,
                                     MethodExecuted = currentMethod.CreateReflectedDelegate(),
                                     Method = endpointAttribute.Method,
                                     Path = path,
@@ -96,7 +97,7 @@ namespace AkiraserverV4.Http
             public int Count { get; set; }
         }
 
-        private void ValidateRouting(ref List<Endpoint> endpoints)
+        private static void ValidateRouting(ref List<Endpoint> endpoints)
         {
             List<EndpointCount> duplicatedCheck = new List<EndpointCount>();
 

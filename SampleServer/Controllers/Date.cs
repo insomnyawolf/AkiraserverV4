@@ -4,7 +4,7 @@ using System;
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class Date : Context
+    public class Date : CustomBaseContext
     {
         [Get]
         public string Now(bool IsShort, string random)

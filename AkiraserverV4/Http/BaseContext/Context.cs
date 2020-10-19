@@ -38,6 +38,10 @@ namespace AkiraserverV4.Http.BaseContext
             {
                 await SendJsonAsync(jsonSerializable).ConfigureAwait(false);
             }
+            else if (data is XmlResult xmlSerializable)
+            {
+                await SendXmlAsync(xmlSerializable).ConfigureAwait(false);
+            }
             else if (data is object)
             {
                 await SendTextAsync(data).ConfigureAwait(false);
@@ -121,10 +125,21 @@ namespace AkiraserverV4.Http.BaseContext
             }
         }
 
+        internal async Task SendJsonAsync<T>(T data) where T : JsonResult
+        {
+            Response.AddContentTypeHeader("text/json");
+            await SendTextAsync(data.Serialize()).ConfigureAwait(false);
+        }
+
+        internal async Task SendXmlAsync<T>(T data) where T : XmlResult
+        {
+            Response.AddContentTypeHeader("text/xml");
+            await SendTextAsync(data.Serialize()).ConfigureAwait(false);
+        }
         internal async Task SendTextAsync(object input)
         {
             byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
-            if (!Response.Headers.ContainsKey("Content-Length"))
+            if (!Response.Headers.ContainsKey(Header.ContentLength))
             {
                 Response.AddContentLenghtHeader(responseBytes.Length);
             }
@@ -135,17 +150,12 @@ namespace AkiraserverV4.Http.BaseContext
         {
             using (Stream dataStream = data.ToStream())
             {
-                if (!Response.Headers.ContainsKey("Content-Length"))
+                if (!Response.Headers.ContainsKey(Header.ContentLength))
                 {
                     Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
                 }
                 await WriteDataAsync(dataStream).ConfigureAwait(false);
             }
-        }
-
-        internal async Task SendJsonAsync<T>(T data) where T : JsonResult
-        {
-            await SendTextAsync(data.SerializedJson).ConfigureAwait(false);
         }
 
         #region IDisposable Support

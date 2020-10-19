@@ -3,7 +3,7 @@
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class SampleContext2 : Context
+    public class SampleContext2 : CustomBaseContext
     {
         [Get("/Potato")]
         public string Potato()
@@ -26,7 +26,7 @@ namespace SampleServer
         [Post("/test2")]
         public object Test2Post()
         {
-            return Request.GetUrlEncodedForm();
+            return Request.ReadUrlEncodedPayload();
         }
     }
 }

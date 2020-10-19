@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AkiraserverV4.Http.BaseContext.Responses
 {
-    public class Response
+    public partial class Response
     {
         public HttpVersion ProtocolVersion { get; set; }
         public HttpStatus Status { get; set; }
@@ -32,7 +32,7 @@ namespace AkiraserverV4.Http.BaseContext.Responses
                 string key = header.Key;
                 string value = header.Value;
 
-                if (key == "Content-Length" && Status == HttpStatus.NoContent)
+                if (key == Header.ContentLength && Status == HttpStatus.NoContent)
                 {
                     value = "0";
                 }
@@ -48,14 +48,19 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             return headerBuilder.ToString();
         }
 
+        public void AddContentTypeHeader(string contentType)
+        {
+            Headers.Add(Header.ContentType, contentType);
+        }
+
         public void AddContentLenghtHeader(int lenght)
         {
-            Headers.Add("Content-Length", lenght.ToString());
+            Headers.Add(Header.ContentLength, lenght.ToString());
         }
 
         public void EnableCrossOriginRequests(string host = "*")
         {
-            Headers.Add("Access-Control-Allow-Origin", host);
+            Headers.Add(Header.AccessControlAllowOrigin, host);
         }
     }
 }

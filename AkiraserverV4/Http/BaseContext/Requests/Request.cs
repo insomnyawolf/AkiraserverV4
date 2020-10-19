@@ -19,31 +19,42 @@ namespace AkiraserverV4.Http.BaseContext.Requests
         private static readonly byte[] HeaderSeparator = Encoding.UTF8.GetBytes("\r\n\r\n");
 
         public NetworkStream NetworkStream { get; private set; }
+        public MemoryStream RequestStream { get; private set; }
         public HttpMethod Method { get; private set; }
         public string Path { get; private set; }
         public HttpVersion Version { get; private set; }
         public Dictionary<string, string> Headers { get; private set; }
         public Form UrlQuery { get; private set; }
 
-        private Request(NetworkStream networkStream)
-        {
-            NetworkStream = networkStream;
-        }
-
-        public static async Task<Request> ParseRequest(NetworkStream networkStream)
+        public Request(NetworkStream networkStream, RequestSettings settings)
         {
             if (networkStream is null)
             {
                 throw new ArgumentNullException(nameof(networkStream));
             }
 
-            Request request = new Request(networkStream);
+            RequestStream = new MemoryStream();
+            byte[] currentBuffer = new byte[settings.ReadPacketSize];
 
-            await request.ParseHeaders(networkStream).ConfigureAwait(false);
+            int dataRead;
 
-            request.ParseUrlQuery();
+            try
+            {
+                while ((dataRead = networkStream.Read(currentBuffer, 0, currentBuffer.Length)) > 0)
+                {
+                    RequestStream.WriteAsync(currentBuffer, 0, dataRead);
+                }
+            }
+            catch(IOException ex)
+            {
+                // Expected
+            }
 
-            return request;
+            RequestStream.Position = 0;
+
+            ParseHeaders();
+
+            ParseUrlQuery();
         }
 
         private void ParseUrlQuery()
@@ -75,7 +86,7 @@ namespace AkiraserverV4.Http.BaseContext.Requests
 
                 if (currentKV.Length == 2)
                 {
-                    result.Add(new FormInput() 
+                    result.Add(new FormInput()
                     {
                         Name = currentKV[0],
                         Value = currentKV[1]
@@ -89,11 +100,10 @@ namespace AkiraserverV4.Http.BaseContext.Requests
             };
         }
 
-        private async Task  ParseHeaders(NetworkStream networkStream)
+        private void ParseHeaders()
         {
-            var reader = new StreamReader(networkStream);
-
-            string data = await reader.ReadLineAsync().ConfigureAwait(false);
+            var RequestReader = new StreamReader(RequestStream);
+            string data = RequestReader.ReadLine();
 
             if (string.IsNullOrEmpty(data))
             {
@@ -114,7 +124,7 @@ namespace AkiraserverV4.Http.BaseContext.Requests
             Headers = new Dictionary<string, string>();
 
             string currentHeader;
-            while (!string.IsNullOrWhiteSpace(currentHeader = reader.ReadLine()))
+            while (!string.IsNullOrWhiteSpace(currentHeader = RequestReader.ReadLine()))
             {
                 string[] header = currentHeader.Split(": ");
                 if (header.Length != 2)

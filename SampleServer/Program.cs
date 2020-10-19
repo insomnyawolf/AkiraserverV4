@@ -12,12 +12,12 @@ namespace SampleServer
     // gobench -u http://localhost:80/Count -c 10000 -k=true  -t 10
     internal static class Program
     {
+        public static readonly IServiceProvider ServiceProvider = ConfigureServices();
         public static async Task Main()
         {
-            IServiceProvider serviceProvider = ConfigureServices();
-
-            AkiraServerV4 serv = new AkiraServerV4(serviceProvider);
+            AkiraServerV4 serv = new AkiraServerV4(ServiceProvider);
             serv.LoadRouting(Assembly.GetExecutingAssembly());
+            //serv.SetMiddleware<Middleware.Middleware>();
 
             Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
             {
@@ -48,7 +48,8 @@ namespace SampleServer
                     .AddFilter("System", LogLevel.Trace)
                     .AddFilter("LoggingConsoleApp.Program", LogLevel.Trace)
                     .AddConsole()
-                    /*.AddEventLog()*/;
+                    //.AddEventLog()
+                    ;
             });
         }
 

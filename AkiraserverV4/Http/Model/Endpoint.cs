@@ -17,6 +17,7 @@ namespace AkiraserverV4.Http.Model
     // What to execute
     public class ExecutedCommand
     {
+        public MethodInfo MethodInfo { get; set; }
         public object MethodExecuted { get; set; }
         public Attribute[] Attributes { get; set; }
         public Type ClassExecuted { get; set; }

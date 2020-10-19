@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleServer", "SampleServe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Extensions", "Extensions\Extensions.csproj", "{F8AC944B-3DFF-4A4A-A0E1-477DB1AC93CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OsuServer", "OsuServer\OsuServer.csproj", "{F60F4795-392C-4D9B-868D-B1123C83E9F0}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{F8AC944B-3DFF-4A4A-A0E1-477DB1AC93CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8AC944B-3DFF-4A4A-A0E1-477DB1AC93CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8AC944B-3DFF-4A4A-A0E1-477DB1AC93CC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F60F4795-392C-4D9B-868D-B1123C83E9F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F60F4795-392C-4D9B-868D-B1123C83E9F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F60F4795-392C-4D9B-868D-B1123C83E9F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F60F4795-392C-4D9B-868D-B1123C83E9F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

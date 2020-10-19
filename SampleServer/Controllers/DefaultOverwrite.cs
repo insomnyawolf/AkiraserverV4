@@ -1,5 +1,6 @@
 ﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.BaseContext.Requests;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -7,20 +8,13 @@ using System.Text.Json;
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class DefaultOverwriteContext : Context
+    public class CustomBaseContext : BaseContext
     {
-        private readonly ILogger<DefaultOverwriteContext> logger;
+        private readonly ILogger<CustomBaseContext> Logger;
 
-        public DefaultOverwriteContext(ILogger<DefaultOverwriteContext> logger)
+        public CustomBaseContext()
         {
-            this.logger = logger;
-        }
-
-        [NotFoundHandler]
-        public string NotFoundHandler()
-        {
-            logger.LogInformation("Not Found:", new RequestData(Request));
-            return "OverWritten Not Found Handler";
+            Logger = Program.ServiceProvider.GetRequiredService<ILogger<CustomBaseContext>>();
         }
 
         private class RequestData
@@ -35,7 +29,6 @@ namespace SampleServer
                 Path = raw.Path;
                 Method = raw.Method.ToString();
                 Headers = raw.Headers;
-                Data = raw.Body.ToString();
             }
         }
     }

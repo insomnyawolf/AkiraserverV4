@@ -11,5 +11,14 @@
             }
             return input;
         }
+
+        public static string RemoveAtStart(this string input, string pattern)
+        {
+            if (input.StartsWith(pattern))
+            {
+                return input[pattern.Length..];
+            }
+            return input;
+        }
     }
 }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SampleServer
 {
     [Controller]
-    public class SampleContext : Context
+    public class SampleContext : CustomBaseContext
     {
         public ISampleService Service { get; set; }
 
@@ -107,17 +107,17 @@ namespace SampleServer
         public async Task ServeLongFile()
         {
 #warning need To Implement This Example
-            byte[] test = new byte[2321312];
+            byte[] test = new byte[100000000];
             Response.AddContentLenghtHeader(test.Length);
             await WriteDataAsync(test);
         }
 
-        [Post("/[method]")]
-        public async Task ReciveResend()
-        {
-            Response.AddContentLenghtHeader(Request.Body.Count);
-            await WriteDataAsync(Request.Body);
-        }
+        //[Post("/[method]")]
+        //public async Task ReciveResend()
+        //{
+        //    Response.AddContentLenghtHeader(Request.Body.Count);
+        //    await WriteDataAsync(Request.Body);
+        //}
 
         //[NotFoundEndpoint]
         public string SampleFallback()

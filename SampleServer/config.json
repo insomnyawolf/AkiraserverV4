@@ -2,9 +2,15 @@
   "Server": {
     "Port": 80,
     "ExclusiveAddressUse": false,
-    "ReciveTimeout": 100,
-    "SendTimeout": 100,
-    "Ttl": null
+    "Ttl": 128,
+    "UseOnlyOverlappedIO": true,
+    "RequestSettings": {
+      "ReciveTimeout": 200,
+      "ReadPacketSize": 8192
+    },
+    "ResponseSettings": {
+      "SendTimeout": 200
+    }
   },
   "Logging": {
 
