@@ -166,7 +166,6 @@ namespace AkiraserverV4.Http
                         {
                             try
                             {
-#warning Fix This
                                 context.Response.Body = await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
                             }
                             catch (IOException)
@@ -184,7 +183,6 @@ namespace AkiraserverV4.Http
 
                         if (!connectionAborted)
                         {
-                            await context.WriteHeadersAsync().ConfigureAwait(false);
                             await context.WriteBodyAsync().ConfigureAwait(false);
                             await context.NetworkStream.FlushAsync().ConfigureAwait(false);
                         }

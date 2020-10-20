@@ -36,6 +36,7 @@ namespace AkiraserverV4.Http.BaseContext
             }
             else if (data is JsonResult jsonSerializable)
             {
+                
                 await SendJsonAsync(jsonSerializable).ConfigureAwait(false);
             }
             else if (data is XmlResult xmlSerializable)

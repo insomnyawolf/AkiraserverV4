@@ -49,38 +49,18 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                 }
             }
 
+            var temp = await ParseHeaders(RequestStream).ConfigureAwait(false);
+
             Request req = new Request()
             {
-                Headers = await ParseHeaders(RequestStream).ConfigureAwait(false),
+                Headers = temp.Headers,
+                BodyBegginingPosition = temp.BodyBeginningPosition,
                 RequestStream = RequestStream,
             };
 
             req.ParseUrlQuery();
 
             return req;
-        }
-
-        private static long FindBodyBegginingPosition(MemoryStream stream)
-        {
-            stream.Position = 0;
-            char[] checkGroup = new char[HeaderDelimiter.Length];
-
-            // ReadByte - we're working with binary file...
-            while (stream.Position < stream.Length)
-            {
-                for (int i = 1; i < checkGroup.Length; i++)
-                {
-                    checkGroup[i - 1] = checkGroup[i];
-                }
-
-                checkGroup[^1] = (char)stream.ReadByte();
-
-                if (HeaderDelimiter.SequenceEqual(checkGroup))
-                {
-                    return stream.Position;
-                }
-            }
-            return -1;
         }
 
         private void ParseUrlQuery()
@@ -126,10 +106,39 @@ namespace AkiraserverV4.Http.BaseContext.Requests
             };
         }
 
-        private async static Task<Headers> ParseHeaders(Stream stream)
+        private static async Task<RequestData> ParseHeaders(Stream stream)
         {
             stream.Position = 0;
-            var RequestReader = new StreamReader(stream);
+
+            var requestData = new RequestData();
+
+            StringBuilder headersRaw = new StringBuilder();
+
+            char[] checkGroup = new char[HeaderDelimiter.Length];
+
+            // ReadByte - we're working with binary file...
+            while (stream.Position < stream.Length)
+            {
+                for (int i = 1; i < checkGroup.Length; i++)
+                {
+                    checkGroup[i - 1] = checkGroup[i];
+                }
+
+                char currentChar = (char)stream.ReadByte();
+                headersRaw.Append(currentChar);
+                checkGroup[^1] = currentChar;
+
+                if (HeaderDelimiter.SequenceEqual(checkGroup))
+                {
+                    requestData.BodyBeginningPosition = stream.Position;
+                    break;
+                }
+            }
+
+            stream.Position = 0;
+
+            var RequestReader = new StringReader(headersRaw.ToString());
+
             string data = await RequestReader.ReadLineAsync().ConfigureAwait(false);
 
             if (string.IsNullOrEmpty(data))
@@ -152,9 +161,6 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                 RequestHeaders = new Dictionary<string, string>()
             };
 
-
-
-
             string currentHeader;
             while (!string.IsNullOrWhiteSpace(currentHeader = RequestReader.ReadLine()))
             {
@@ -166,7 +172,9 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                 headers.RequestHeaders.Add(header[0], header[1]);
             }
 
-            return headers;
+            requestData.Headers = headers;
+
+            return requestData;
         }
     }
 }

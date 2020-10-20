@@ -6,12 +6,18 @@ using System.Text.Json.Serialization;
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class JsonContext : CustomBaseContext
+    public class ConvertContext : CustomBaseContext
     {
-        [Post]
-        public XmlResult Post(List<KonachanApiResponse> items)
+        [Post("/[method]")]
+        public XmlResult JsonToXml(List<KonachanApiResponse> items)
         {
             return new XmlResult(items);
+        }
+
+        [Post("/[method]")]
+        public JsonResult XmlToJson(List<KonachanApiResponse> items)
+        {
+            return new JsonResult(items);
         }
 
         public class KonachanApiResponse

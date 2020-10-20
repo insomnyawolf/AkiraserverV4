@@ -102,6 +102,10 @@ namespace AkiraserverV4.Http
                     {
                         parameters[i] = JsonDeserialize.DeSerialize(currentParam.ParameterType, request.ReadStringPayload());
                     }
+                    else if (request.Headers.RequestHeaders[Header.ContentType].StartsWith(XmlDeserialize.ContentType))
+                    {
+                        parameters[i] = XmlDeserialize.DeSerialize(currentParam.ParameterType, request.ReadRawPayload());
+                    }
                     // Map body Object Here
                 }
 

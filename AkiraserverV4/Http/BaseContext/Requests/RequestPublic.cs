@@ -18,13 +18,9 @@ namespace AkiraserverV4.Http.BaseContext.Requests
 {
     public partial class Request
     {
-        private MemoryStream ReadRawPayload()
+        public MemoryStream ReadRawPayload()
         {
-            if (BodyBegginingPosition == null)
-            {
-                BodyBegginingPosition = FindBodyBegginingPosition(RequestStream);
-            }
-            if (BodyBegginingPosition < 0)
+            if (BodyBegginingPosition < 1)
             {
                 return null;
             }

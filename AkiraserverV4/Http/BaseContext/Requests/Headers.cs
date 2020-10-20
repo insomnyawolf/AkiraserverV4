@@ -14,4 +14,10 @@ namespace AkiraserverV4.Http.BaseContext.Requests
         public HttpVersion Version { get; set; }
         public Dictionary<string, string> RequestHeaders { get; set; }
     }
+
+    public class RequestData
+    {
+        public Headers Headers { get; set; }
+        public long BodyBeginningPosition { get; set; }
+    }
 }
