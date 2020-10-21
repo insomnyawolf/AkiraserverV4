@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SampleServer
 {
     // Benchmark Command
-    // gobench -u http://localhost:80/Count -c 10000 -k=true  -t 10
+    // gobench -u http://localhost:80/Count -k=true -c 1000 -t 10
     internal static class Program
     {
         public static readonly IServiceProvider ServiceProvider = ConfigureServices();

@@ -1,5 +1,6 @@
 ﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.SerializeHelpers;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -9,7 +10,13 @@ namespace SampleServer
     public class ConvertContext : CustomBaseContext
     {
         [Post("/[method]")]
-        public XmlResult JsonToXml(List<KonachanApiResponse> items)
+        public object UrlEncoded()
+        {
+            return new JsonResult(Request.ReadUrlEncodedPayload());
+        }
+
+        [Post("/[method]")]
+        public XmlResult JsonToXml(List<KonachanApiResponse> items, string TestParam1, int TestParam2, DateTime DateTime)
         {
             return new XmlResult(items);
         }
@@ -130,6 +137,5 @@ namespace SampleServer
             [JsonPropertyName("frames")]
             public List<object> Frames { get; set; }
         }
-
     }
 }

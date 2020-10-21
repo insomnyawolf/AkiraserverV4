@@ -9,7 +9,10 @@
       "ReadPacketSize": 8192
     },
     "ResponseSettings": {
-      "SendTimeout": 50
+      "SendTimeout": 50,
+      "StaticResponseHeaders": {
+        "Access-Control-Allow-Origin": "*"
+      }
     }
   },
   "Logging": {

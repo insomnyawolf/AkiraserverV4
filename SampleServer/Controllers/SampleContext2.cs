@@ -1,9 +1,10 @@
 ﻿using AkiraserverV4.Http.BaseContext;
+using AkiraserverV4.Http.SerializeHelpers;
 
 namespace SampleServer
 {
     [Controller("/[controller]")]
-    public class SampleContext2 : CustomBaseContext
+    public class Sample2Context : CustomBaseContext
     {
         [Get("/Potato")]
         public string Potato()
@@ -17,16 +18,10 @@ namespace SampleServer
             return "ASDASDFASD";
         }
 
-        [Get("/test2")]
-        public string Test2()
+        [Get("/[method]")]
+        public string Suraimu()
         {
-            return "ASDASDFASD";
-        }
-
-        [Post("/test2")]
-        public object Test2Post()
-        {
-            return Request.ReadUrlEncodedPayload();
+            return "Nombre";
         }
     }
 }
