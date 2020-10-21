@@ -1,12 +1,9 @@
 ﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.BaseContext.Requests;
-using AkiraserverV4.Http.BaseContext.Responses;
-using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using AkiraserverV4.Http.SerializeHelpers;
 using Extensions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -19,11 +16,6 @@ namespace AkiraserverV4.Http
     {
         private static async Task<object> InvokeHandlerAsync(BaseContext.BaseContext context, ExecutedCommand executedCommand, Exception exception = null)
         {
-            if (context.NetworkStreamFailed)
-            {
-                return null;
-            }
-
             dynamic data = await InvokeNamedParams(context, executedCommand, exception).ConfigureAwait(false);
 
             if (data is Task)
@@ -78,21 +70,28 @@ namespace AkiraserverV4.Http
                 // If object type should try to get the value of the body (json/xml/form) else map query parameters into it
 
                 if (currentParam.ParameterType.IsValueType
-                    || currentParam.ParameterType.UnderlyingSystemType.IsValueType
-                    || currentParam.ParameterType == typeof(string))
+                 || currentParam.ParameterType.UnderlyingSystemType.IsValueType
+                 || currentParam.ParameterType == typeof(DateTime)
+                 || currentParam.ParameterType == typeof(TimeSpan)
+                 || currentParam.ParameterType == typeof(DateTimeOffset)
+                 || currentParam.ParameterType == typeof(DateTime?)
+                 || currentParam.ParameterType == typeof(TimeSpan?)
+                 || currentParam.ParameterType == typeof(DateTimeOffset?)
+                 || currentParam.ParameterType == typeof(string))
                 {
                     parameters[i] = currentParam.ConvertValue(default);
 
-                    if (currentParam.GetCustomAttribute<RequestDataBindingAttribute>() is RequestDataBindingAttribute test)
+                    //if (currentParam.GetCustomAttribute<RequestDataBindingAttribute>() is RequestDataBindingAttribute test)
+                    //{
+                    //}
+
+                    var item = request.UrlQuery.SingleOrDefault(item => item.Name == currentParam.Name);
+                    if (item != null)
                     {
-                        var item = request.UrlQuery.FormInput.SingleOrDefault(item => item.Name == currentParam.Name);
-                        if (item != null)
+                        int paramIndex = Array.IndexOf(paramNames, currentParam.Name);
+                        if (paramIndex >= 0)
                         {
-                            int paramIndex = Array.IndexOf(paramNames, currentParam.Name);
-                            if (paramIndex >= 0)
-                            {
-                                parameters[paramIndex] = paramInfos[paramIndex].ConvertValue(item.Value);
-                            }
+                            parameters[paramIndex] = paramInfos[paramIndex].ConvertValue(item.Value);
                         }
                     }
                 }
@@ -100,13 +99,13 @@ namespace AkiraserverV4.Http
                 {
                     if (request.Headers.RequestHeaders[Header.ContentType].StartsWith(JsonDeserialize.ContentType))
                     {
-                        parameters[i] = JsonDeserialize.DeSerialize(currentParam.ParameterType, request.ReadStringPayload());
+                        parameters[i] = await request.ReadJsonPayload(currentParam.ParameterType).ConfigureAwait(false);
                     }
                     else if (request.Headers.RequestHeaders[Header.ContentType].StartsWith(XmlDeserialize.ContentType))
                     {
-                        parameters[i] = XmlDeserialize.DeSerialize(currentParam.ParameterType, request.ReadRawPayload());
+                        parameters[i] = request.ReadXmlPayload(currentParam.ParameterType);
                     }
-                    // Map body Object Here
+                    // Can not map single raw object to property (?)
                 }
 
             }

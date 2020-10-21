@@ -1,18 +1,9 @@
-﻿using AkiraserverV4.Http.Exceptions;
-using AkiraserverV4.Http.Helper;
-using SuperSimpleHttpListener.Http.Helper;
+﻿using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
-using System.Xml.Serialization;
 
 namespace AkiraserverV4.Http.BaseContext.Requests
 {
@@ -20,42 +11,47 @@ namespace AkiraserverV4.Http.BaseContext.Requests
     {
         public MemoryStream ReadRawPayload()
         {
-            if (BodyBegginingPosition < 1)
-            {
-                return null;
-            }
-
-            RequestStream.Position = BodyBegginingPosition.Value;
-            return RequestStream;
+            Body.Position = 0;
+            return Body;
         }
 
-        public string ReadStringPayload()
+        public async Task<string> ReadStringPayload()
         {
             var war = ReadRawPayload();
 
-            return new StreamReader(war).ReadToEnd();
+            return await new StreamReader(war).ReadToEndAsync().ConfigureAwait(false);
         }
 
-        public T ReadJsonPayload<T>()
+        public async Task<T> ReadJsonPayload<T>()
         {
-            string data = ReadStringPayload();
-            return JsonSerializer.Deserialize<T>(data);
+            return (T)await ReadJsonPayload(typeof(T)).ConfigureAwait(false);
+        }
+
+        public async Task<object> ReadJsonPayload(Type type)
+        {
+            string data = await ReadStringPayload().ConfigureAwait(false);
+            return JsonSerializer.Deserialize(data, type);
         }
 
         public T ReadXmlPayload<T>()
         {
-            return (T)new XmlSerializer(typeof(T)).Deserialize(ReadRawPayload());
+            return (T)ReadXmlPayload(typeof(T));
         }
 
-        public Form ReadUrlEncodedPayload()
+        public object ReadXmlPayload(Type type)
         {
-            string data = ReadStringPayload();
-            return DeserializeUrlEncoded(data);
+            return XmlDeserialize.DeSerialize(type, ReadRawPayload());
         }
 
-        public async Task ReadMultipartPayload()
+        public async Task<List<FormInput>> ReadUrlEncodedPayload()
+        {
+            return DeserializeUrlEncoded(await ReadStringPayload().ConfigureAwait(false));
+        }
+
+        public async Task<Form> ReadMultipartPayload()
         {
 #warning To Implement This
+            throw new NotImplementedException();
         }
     }
 }

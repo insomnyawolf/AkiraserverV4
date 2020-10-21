@@ -6,6 +6,9 @@ namespace AkiraserverV4.Http.BaseContext.Responses
     {
         public static readonly Dictionary<HttpStatus, string> RespStatus = new Dictionary<HttpStatus, string>()
         {
+            //"100"  ; Section 10.1.1: Continue
+            //"101"  ; Section 10.1.2: Switching Protocols
+
             // Ok
 
             { HttpStatus.Ok, "200 Ok" },
@@ -13,6 +16,8 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             { HttpStatus.Accepted, "202 Accepted" },
             { HttpStatus.NonAuthoritative, "203 Non-Authoritative" },
             { HttpStatus.NoContent, "204 No Content" },
+            { HttpStatus.ResetContent, "205 Reset Content" },
+            { HttpStatus.PartialContent, "204 Partial Content" },
 
             // Redirect
 
@@ -21,6 +26,8 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             { HttpStatus.Redirection, "302 Redirection" },
             { HttpStatus.SeeOther, "303 See Other" },
             { HttpStatus.NotModified, "304 Not Modified" },
+            { HttpStatus.UseProxy, "305 Use Proxy" },
+            { HttpStatus.TemporaryRedirect, "307 Temporary Redirect" },
 
             // Client Error
 
@@ -29,6 +36,19 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             { HttpStatus.PaymentRequired, "402 Payment Required" },
             { HttpStatus.Forbidden, "403 Forbidden" },
             { HttpStatus.NotFound, "404 Not Found" },
+            { HttpStatus.MethodNotAllowed, "405 Method Not Allowed" },
+            { HttpStatus.NotAcceptable, "406 Not Acceptable" },
+            { HttpStatus.ProxyAuthenticationRequired, "407 Proxy Authentication Required" },
+            { HttpStatus.RequestTimeOut, "408 Request Time-out" },
+            { HttpStatus.Conflict, "409 Conflict" },
+            { HttpStatus.Gone, "410 Gone" },
+            { HttpStatus.LengthRequired, "411 Length Required" },
+            { HttpStatus.PreconditionFailed, "412 Precondition Failed" },
+            { HttpStatus.RequestEntityTooLarge, "413 Request Entity Too Large" },
+            { HttpStatus.RequestURITooLarge, "414 Request-URI Too Large" },
+            { HttpStatus.UnsupportedMediaType, "415 Unsupported Media Type" },
+            { HttpStatus.RequestedRangeNotSatisfiable, "416 Requested range not satisfiable" },
+            { HttpStatus.ExpectationFailed, "417 Expectation Failed" },
             { HttpStatus.ImTeapot, "418 I'm a teapot" },
 
             // Server Error
@@ -37,6 +57,8 @@ namespace AkiraserverV4.Http.BaseContext.Responses
             { HttpStatus.NotImplemented, "501 Not Implemented" },
             { HttpStatus.BadGateway, "502 Bad Gateway" },
             { HttpStatus.ServiceUnavailable, "503 Service Unavailable" },
+            { HttpStatus.GatewayTimeOut, "504 Gateway Time-out" },
+            { HttpStatus.HTTPVersionNotSupported, "505 HTTP Version not supported" },
         };
 
         public static string ToStatusString(this HttpStatus status)
@@ -58,6 +80,8 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         Accepted = 202,
         NonAuthoritative = 203,
         NoContent = 204,
+        ResetContent = 205,
+        PartialContent = 206,
 
         // Redirect
 
@@ -66,6 +90,8 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         Redirection = 302,
         SeeOther = 303,
         NotModified = 304,
+        UseProxy = 305,
+        TemporaryRedirect = 307,
 
         // Client Error
 
@@ -74,6 +100,19 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         PaymentRequired = 402,
         Forbidden = 403,
         NotFound = 404,
+        MethodNotAllowed = 405,
+        NotAcceptable = 406,
+        ProxyAuthenticationRequired = 407,
+        RequestTimeOut = 408,
+        Conflict = 409,
+        Gone = 410,
+        LengthRequired = 411,
+        PreconditionFailed = 412,
+        RequestEntityTooLarge = 413,
+        RequestURITooLarge = 414,
+        UnsupportedMediaType = 415,
+        RequestedRangeNotSatisfiable = 416,
+        ExpectationFailed = 417,
         ImTeapot = 418,
 
         // Server Error
@@ -82,5 +121,7 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         NotImplemented = 501,
         BadGateway = 502,
         ServiceUnavailable = 503,
+        GatewayTimeOut = 504,
+        HTTPVersionNotSupported = 505,
     }
 }

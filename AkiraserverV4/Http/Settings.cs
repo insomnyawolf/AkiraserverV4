@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace AkiraserverV4.Http
 {
@@ -25,5 +21,7 @@ namespace AkiraserverV4.Http
     public class ResponseSettings
     {
         public int SendTimeout { get; set; }
+#warning Buscar un nombre mejor
+        public Dictionary<string,string> StaticResponseHeaders { get; set; }
     }
 }

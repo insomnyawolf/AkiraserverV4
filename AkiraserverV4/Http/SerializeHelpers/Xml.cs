@@ -9,6 +9,7 @@ namespace AkiraserverV4.Http.SerializeHelpers
     {
         public XmlResult(object obj) : base(obj)
         {
+            ContentType = "application/xml";
         }
 
         public override string Serialize()

@@ -5,6 +5,7 @@ namespace AkiraserverV4.Http.SerializeHelpers
 {
     public abstract class ResponseResult
     {
+        public string ContentType { get; set; }
         public object Content { get; set; }
 
         public ResponseResult(object obj)

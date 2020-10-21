@@ -7,6 +7,7 @@ namespace AkiraserverV4.Http.SerializeHelpers
     {
         public JsonResult(object obj) : base(obj)
         {
+            ContentType = "application/json";
         }
 
         public override string Serialize()

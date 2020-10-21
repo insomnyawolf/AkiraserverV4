@@ -1,4 +1,5 @@
-﻿using SuperSimpleHttpListener.Http.Helper;
+﻿using Extensions;
+using SuperSimpleHttpListener.Http.Helper;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,9 +13,9 @@ namespace AkiraserverV4.Http.BaseContext.Responses
         private const string HeaderSeparator = "\r\n";
         public object Body;
 
-        public Response(HttpStatus status = HttpStatus.Ok, HttpVersion protocolVersion = HttpVersion.HTTP11)
+        public Response(ResponseSettings settings, HttpStatus status = HttpStatus.Ok, HttpVersion protocolVersion = HttpVersion.HTTP11)
         {
-            Headers = new Dictionary<string, string>();
+            Headers = settings.StaticResponseHeaders?.Clone() ?? new Dictionary<string, string>();
             Status = status;
             ProtocolVersion = protocolVersion;
         }
@@ -50,17 +51,18 @@ namespace AkiraserverV4.Http.BaseContext.Responses
 
         public void AddContentTypeHeader(string contentType)
         {
-            Headers.Add(Header.ContentType, contentType);
+            if (!Headers.ContainsKey(Header.ContentType))
+            {
+                Headers.Add(Header.ContentType, contentType);
+            }
         }
 
         public void AddContentLenghtHeader(int lenght)
         {
-            Headers.Add(Header.ContentLength, lenght.ToString());
-        }
-
-        public void EnableCrossOriginRequests(string host = "*")
-        {
-            Headers.Add(Header.AccessControlAllowOrigin, host);
+            if (!Headers.ContainsKey(Header.ContentLength))
+            {
+                Headers.Add(Header.ContentLength, lenght.ToString());
+            }
         }
     }
 }

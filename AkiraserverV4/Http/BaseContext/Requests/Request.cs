@@ -19,10 +19,9 @@ namespace AkiraserverV4.Http.BaseContext.Requests
     public partial class Request
     {
         private static readonly char[] HeaderDelimiter = "\r\n\r\n".ToCharArray();
-        public MemoryStream RequestStream { get; private set; }
-        private long? BodyBegginingPosition;
         public Headers Headers { get; set; }
-        public Form UrlQuery { get; private set; }
+        public MemoryStream Body { get; set; }
+        public List<FormInput> UrlQuery { get; private set; }
 
 
         public static async Task<Request> BuildRequest(NetworkStream networkStream, RequestSettings settings)
@@ -34,28 +33,56 @@ namespace AkiraserverV4.Http.BaseContext.Requests
             }
 
 
-
-            var RequestStream = new MemoryStream();
             byte[] currentBuffer = new byte[settings.ReadPacketSize];
 
-            int dataRead;
-            while (true)
+            int dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, settings.ReadPacketSize, settings.ReciveTimeout).ConfigureAwait(false);
+
+            var temp = await ParseHeaders(currentBuffer, dataRead).ConfigureAwait(false);
+
+            long? bodySize = null;
+
+            if (temp.Headers.RequestHeaders.ContainsKey(Header.ContentLength))
             {
-                dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, settings.ReciveTimeout).ConfigureAwait(false);
-                await RequestStream.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
+                bodySize = long.Parse(temp.Headers.RequestHeaders[Header.ContentLength]);
+            }
+
+            int remeaning = settings.ReadPacketSize;
+
+            while (!bodySize.HasValue || bodySize > 0 && temp.Body.Position < bodySize)
+            {
+                if (bodySize.HasValue)
+                {
+                    remeaning = (int)(bodySize.Value - temp.Body.Position);
+
+                    if (remeaning > settings.ReadPacketSize)
+                    {
+                        remeaning = settings.ReadPacketSize;
+                    }
+                }
+
+                dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, (int)remeaning, settings.ReciveTimeout).ConfigureAwait(false);
+                await temp.Body.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
                 if (dataRead != currentBuffer.Length)
                 {
                     break;
                 }
             }
 
-            var temp = await ParseHeaders(RequestStream).ConfigureAwait(false);
+            //while (true)
+            //{
+            //    dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, settings.ReciveTimeout).ConfigureAwait(false);
+            //    await RequestStream.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
+            //    if (dataRead != currentBuffer.Length)
+            //    {
+            //        break;
+            //    }
+            //}
+
 
             Request req = new Request()
             {
                 Headers = temp.Headers,
-                BodyBegginingPosition = temp.BodyBeginningPosition,
-                RequestStream = RequestStream,
+                Body = temp.Body,
             };
 
             req.ParseUrlQuery();
@@ -78,7 +105,7 @@ namespace AkiraserverV4.Http.BaseContext.Requests
             }
         }
 
-        private static Form DeserializeUrlEncoded(string raw)
+        private static List<FormInput> DeserializeUrlEncoded(string raw)
         {
             List<FormInput> result = new List<FormInput>();
 
@@ -100,42 +127,36 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                 }
             }
 
-            return new Form()
-            {
-                FormInput = result
-            };
+            return result;
         }
 
-        private static async Task<RequestData> ParseHeaders(Stream stream)
+        private static async Task<RequestData> ParseHeaders(byte[] stream, int maxPosition)
         {
-            stream.Position = 0;
-
-            var requestData = new RequestData();
+            
 
             StringBuilder headersRaw = new StringBuilder();
 
             char[] checkGroup = new char[HeaderDelimiter.Length];
 
-            // ReadByte - we're working with binary file...
-            while (stream.Position < stream.Length)
+            int position = 0;
+            while (position < maxPosition)
             {
                 for (int i = 1; i < checkGroup.Length; i++)
                 {
                     checkGroup[i - 1] = checkGroup[i];
                 }
 
-                char currentChar = (char)stream.ReadByte();
+                char currentChar = (char)stream[position];
                 headersRaw.Append(currentChar);
                 checkGroup[^1] = currentChar;
 
+                position++;
+
                 if (HeaderDelimiter.SequenceEqual(checkGroup))
                 {
-                    requestData.BodyBeginningPosition = stream.Position;
                     break;
                 }
             }
-
-            stream.Position = 0;
 
             var RequestReader = new StringReader(headersRaw.ToString());
 
@@ -172,7 +193,19 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                 headers.RequestHeaders.Add(header[0], header[1]);
             }
 
-            requestData.Headers = headers;
+            MemoryStream body = null;
+
+            if (position < maxPosition)
+            {
+                body = new MemoryStream();
+                await body.WriteAsync(stream, position, maxPosition - position).ConfigureAwait(false);
+            }
+
+            var requestData = new RequestData()
+            {
+                Body = body,
+                Headers = headers
+            };
 
             return requestData;
         }

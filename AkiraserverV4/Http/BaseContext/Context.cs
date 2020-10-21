@@ -4,11 +4,9 @@ using AkiraserverV4.Http.Helper;
 using AkiraserverV4.Http.SerializeHelpers;
 using Extensions;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.BaseContext
@@ -18,7 +16,6 @@ namespace AkiraserverV4.Http.BaseContext
         public Request Request { get; private set; }
         public Response Response { get; private set; }
         public NetworkStream NetworkStream { get; private set; }
-        public bool NetworkStreamFailed { get; set; }
 
         private bool HeadersWritten;
 
@@ -34,14 +31,9 @@ namespace AkiraserverV4.Http.BaseContext
                     Response.Status = HttpStatus.NoContent;
                 }
             }
-            else if (data is JsonResult jsonSerializable)
+            else if (data is ResponseResult responseResult)
             {
-                
-                await SendJsonAsync(jsonSerializable).ConfigureAwait(false);
-            }
-            else if (data is XmlResult xmlSerializable)
-            {
-                await SendXmlAsync(xmlSerializable).ConfigureAwait(false);
+                await SendResponseResultAsync(responseResult).ConfigureAwait(false);
             }
             else if (data is object)
             {
@@ -57,19 +49,7 @@ namespace AkiraserverV4.Http.BaseContext
         public async Task WriteDataAsync(Stream data)
         {
             await WriteHeadersAsync().ConfigureAwait(false);
-
-            try
-            {
-                if (!NetworkStreamFailed)
-                {
-                    await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
-                }
-            }
-            catch (IOException)
-            {
-                NetworkStreamFailed = true;
-#warning proper error handling
-            }
+            await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -78,41 +58,29 @@ namespace AkiraserverV4.Http.BaseContext
         /// <returns></returns>
         public async Task WriteHeadersAsync()
         {
-            if (!HeadersWritten && !NetworkStreamFailed)
+            if (!HeadersWritten)
             {
                 byte[] headers = Response.ProcessHeaders().ToByteArray();
 
-                try
-                {
-                    await NetworkStream.WriteAsync(headers, 0, headers.Length).ConfigureAwait(false);
-                }
-                catch (IOException)
-                {
-                    NetworkStreamFailed = true;
-#warning proper error handling
-                }
+                await NetworkStream.WriteAsync(headers, 0, headers.Length).ConfigureAwait(false);
+
                 HeadersWritten = true;
             }
         }
 
-        internal async Task SendJsonAsync<T>(T data) where T : JsonResult
+        internal async Task SendResponseResultAsync<T>(T data) where T : ResponseResult
         {
-            Response.AddContentTypeHeader("text/json");
+            Response.AddContentTypeHeader(data.ContentType);
             await SendTextAsync(data.Serialize()).ConfigureAwait(false);
         }
 
-        internal async Task SendXmlAsync<T>(T data) where T : XmlResult
-        {
-            Response.AddContentTypeHeader("text/xml");
-            await SendTextAsync(data.Serialize()).ConfigureAwait(false);
-        }
         internal async Task SendTextAsync(object input)
         {
+#warning Moove to constants / enum
+
+            Response.AddContentTypeHeader("text/plain");
             byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
-            if (!Response.Headers.ContainsKey(Header.ContentLength))
-            {
-                Response.AddContentLenghtHeader(responseBytes.Length);
-            }
+            Response.AddContentLenghtHeader(responseBytes.Length);
             await WriteDataAsync(responseBytes).ConfigureAwait(false);
         }
 
@@ -120,10 +88,10 @@ namespace AkiraserverV4.Http.BaseContext
         {
             using (Stream dataStream = data.ToStream())
             {
-                if (!Response.Headers.ContainsKey(Header.ContentLength))
-                {
-                    Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
-                }
+                Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
+#warning Moove to constants / enum
+                Response.AddContentTypeHeader("application/octet-stream");
+
                 await WriteDataAsync(dataStream).ConfigureAwait(false);
             }
         }

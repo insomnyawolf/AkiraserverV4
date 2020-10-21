@@ -1,6 +1,6 @@
 ﻿using AkiraserverV4.Http.BaseContext;
 using AkiraserverV4.Http.BaseContext.Requests;
-using AkiraserverV4.Http.Exceptions;
+using AkiraserverV4.Http.BaseContext.Responses;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.Configuration;
@@ -146,14 +146,10 @@ namespace AkiraserverV4.Http
                         executedCommand = executedCommand1;
                     }
 
-                    using (BaseContext.BaseContext context = ContextBuilder.CreateContext(executedCommand?.ClassExecuted ?? Middleware, netStream, request, ServiceProvider))
+                    var response = new Response(Settings.ResponseSettings);
+
+                    using (BaseContext.BaseContext context = ContextBuilder.CreateContext(executedCommand?.ClassExecuted ?? Middleware, netStream, request, response, ServiceProvider))
                     {
-                        context.Response.EnableCrossOriginRequests();
-
-                        bool connectionAborted = false;
-
-
-
                         if (request is null)
                         {
                             context.Response.Body = await context.BadRequest(exception).ConfigureAwait(false);
@@ -168,11 +164,9 @@ namespace AkiraserverV4.Http
                             {
                                 context.Response.Body = await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
                             }
-                            catch (IOException)
+                            catch (IOException e)
                             {
-                                // Not really important
-                                // It happens when the client force closes the connection
-                                connectionAborted = true;
+                                throw;
                             }
                             catch (Exception ex)
                             {
@@ -180,12 +174,8 @@ namespace AkiraserverV4.Http
                             }
                         }
 
-
-                        if (!connectionAborted)
-                        {
-                            await context.WriteBodyAsync().ConfigureAwait(false);
-                            await context.NetworkStream.FlushAsync().ConfigureAwait(false);
-                        }
+                        await context.WriteBodyAsync().ConfigureAwait(false);
+                        await context.NetworkStream.FlushAsync().ConfigureAwait(false);
                     }
                 }
             }

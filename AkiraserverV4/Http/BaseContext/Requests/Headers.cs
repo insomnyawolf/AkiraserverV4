@@ -1,9 +1,6 @@
 ﻿using SuperSimpleHttpListener.Http.Helper;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace AkiraserverV4.Http.BaseContext.Requests
 {
@@ -18,6 +15,6 @@ namespace AkiraserverV4.Http.BaseContext.Requests
     public class RequestData
     {
         public Headers Headers { get; set; }
-        public long BodyBeginningPosition { get; set; }
+        public MemoryStream Body { get; set; }
     }
 }
