@@ -14,4 +14,4 @@ You can find a simple example written in [SampleServer](https://github.com/insom
 
 ## Todo
 
-* Improve Middleware to suppor current request pre actions and post actions
+* Current Middleware Implementation just doesn't work at all
