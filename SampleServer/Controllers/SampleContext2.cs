@@ -19,9 +19,9 @@ namespace SampleServer
         }
 
         [Get("/[method]")]
-        public string Suraimu()
+        public string Akuma()
         {
-            return "Nombre";
+            return "Meme";
         }
     }
 }

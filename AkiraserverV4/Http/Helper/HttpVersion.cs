@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SuperSimpleHttpListener.Http.Helper
+namespace AkiraserverV4.Http.Helper
 {
     public static class HttpVersionConvert
     {

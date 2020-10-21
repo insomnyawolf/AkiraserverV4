@@ -1,11 +1,10 @@
-﻿using System;
-using System.Text.Json;
+﻿using AkiraserverV4.Http.Helper;
 
 namespace AkiraserverV4.Http.SerializeHelpers
 {
     public abstract class ResponseResult
     {
-        public string ContentType { get; set; }
+        public ContentType ContentType { get; set; }
         public object Content { get; set; }
 
         public ResponseResult(object obj)

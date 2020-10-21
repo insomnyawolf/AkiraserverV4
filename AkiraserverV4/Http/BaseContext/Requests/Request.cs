@@ -1,5 +1,6 @@
 ﻿using AkiraserverV4.Http.Exceptions;
-using SuperSimpleHttpListener.Http.Helper;
+using AkiraserverV4.Http.Helper;
+using AkiraserverV4.Http.Helper;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -137,7 +138,7 @@ namespace AkiraserverV4.Http.Context.Requests
 
                 position++;
 
-                if (HeaderDelimiter.SequenceEqual(checkGroup))
+                if (HeaderDelimiter.PatternEquals(checkGroup))
                 {
                     break;
                 }

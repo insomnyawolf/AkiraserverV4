@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text.Json;
+using AkiraserverV4.Http.Helper;
 
 namespace AkiraserverV4.Http.SerializeHelpers
 {
@@ -7,7 +8,7 @@ namespace AkiraserverV4.Http.SerializeHelpers
     {
         public JsonResult(object obj) : base(obj)
         {
-            ContentType = "application/json";
+            ContentType = ContentType.JSON;
         }
 
         public override string Serialize()

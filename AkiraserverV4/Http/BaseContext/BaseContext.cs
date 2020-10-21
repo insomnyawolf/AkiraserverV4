@@ -4,6 +4,7 @@ using AkiraserverV4.Http.Helper;
 using AkiraserverV4.Http.Model;
 using AkiraserverV4.Http.SerializeHelpers;
 using Extensions;
+using AkiraserverV4.Http.Helper;
 using System;
 using System.IO;
 using System.Linq;
@@ -11,10 +12,11 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static AkiraserverV4.Http.Helper.Mime;
 
 namespace AkiraserverV4.Http.Context
 {
-    public partial class BaseContext : IDisposable
+    public partial class BaseContext
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
@@ -81,7 +83,7 @@ namespace AkiraserverV4.Http.Context
         {
 #warning Moove to constants / enum
 
-            Response.AddContentTypeHeader("text/plain");
+            Response.AddContentTypeHeader(ContentType.PlainText);
             byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
             Response.AddContentLenghtHeader(responseBytes.Length);
             await WriteDataAsync(responseBytes).ConfigureAwait(false);
@@ -93,7 +95,7 @@ namespace AkiraserverV4.Http.Context
             {
                 Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
 #warning Moove to constants / enum
-                Response.AddContentTypeHeader("application/octet-stream");
+                Response.AddContentTypeHeader(ContentType.Binary);
 
                 await WriteDataAsync(dataStream).ConfigureAwait(false);
             }
@@ -122,30 +124,14 @@ namespace AkiraserverV4.Http.Context
 
         private static async Task<object> InvokeNamedParams(BaseContext context, ExecutedCommand executedCommand)
         {
-#warning rework invoke with named params
-            //executedCommand.MethodExecuted.HasProperty
-            //Dictionary<string, string> parameters = new Dictionary<string, string>();
-            //parameters = context.Request.UrlQuery;
             var parameters = await MapParameters(executedCommand.ParameterInfo, context.Request).ConfigureAwait(false);
 
             return Invoke(methodExecuted: executedCommand.MethodExecuted, context: context, parameters: parameters);
         }
 
-        private static object Invoke(object methodExecuted, BaseContext context, params object[] parameters)
-        {
-            if (methodExecuted is DelegateFactory.ReflectedDelegate reflectedDelegate)
-            {
-                return reflectedDelegate(context, parameters);
-            }
-            else if (methodExecuted is DelegateFactory.ReflectedVoidDelegate action)
-            {
-                action(context, parameters);
-            }
-            return null;
-        }
-
         public static async Task<object[]> MapParameters(ParameterInfo[] paramInfos, Request request)
         {
+#warning rework invoke with named params
             string[] paramNames = paramInfos.Select(p => p.Name).ToArray();
             object[] parameters = new object[paramNames.Length];
             for (int i = 0; i < parameters.Length; ++i)
@@ -181,11 +167,21 @@ namespace AkiraserverV4.Http.Context
                 }
                 else if (request.Headers.RequestHeaders.ContainsKey(Header.ContentType))
                 {
-                    if (request.Headers.RequestHeaders[Header.ContentType].StartsWith(JsonDeserialize.ContentType))
+                    var contentTypeHeader = request.Headers.RequestHeaders[Header.ContentType];
+                    //if (contentTypeHeader)
+                    //{
+
+                    //}
+                    //else if (contentTypeHeader)
+                    //{
+
+                    //}
+                    //else 
+                    if (contentTypeHeader.StartsWith(JsonDeserialize.ContentType))
                     {
                         parameters[i] = await request.ReadJsonPayload(currentParam.ParameterType).ConfigureAwait(false);
                     }
-                    else if (request.Headers.RequestHeaders[Header.ContentType].StartsWith(XmlDeserialize.ContentType))
+                    else if (contentTypeHeader.StartsWith(XmlDeserialize.ContentType))
                     {
                         parameters[i] = request.ReadXmlPayload(currentParam.ParameterType);
                     }
@@ -197,46 +193,17 @@ namespace AkiraserverV4.Http.Context
             return parameters;
         }
 
-        #region IDisposable Support
-
-        private bool disposedValue; // Para detectar llamadas redundantes
-
-        protected virtual void Dispose(bool disposing)
+        private static object Invoke(object methodExecuted, BaseContext context, params object[] parameters)
         {
-            if (!disposedValue)
+            if (methodExecuted is DelegateFactory.ReflectedDelegate reflectedDelegate)
             {
-                if (disposing)
-                {
-                    Request = null;
-                    Response = null;
-                    NetworkStream.Flush();
-                    NetworkStream.Close();
-                    // TODO: elimine el estado administrado (objetos administrados).
-                }
-
-                // TODO: libere los recursos no administrados (objetos no administrados) y reemplace el siguiente finalizador.
-                // TODO: configure los campos grandes en nulos.
-
-                disposedValue = true;
+                return reflectedDelegate(context, parameters);
             }
+            else if (methodExecuted is DelegateFactory.ReflectedVoidDelegate action)
+            {
+                action(context, parameters);
+            }
+            return null;
         }
-
-        // TODO: reemplace un finalizador solo si el anterior Dispose(bool disposing) tiene código para liberar los recursos no administrados.
-        // ~Context()
-        // {
-        //   // No cambie este código. Coloque el código de limpieza en el anterior Dispose(colocación de bool).
-        //   Dispose(false);
-        // }
-
-        // Este código se agrega para implementar correctamente el patrón descartable.
-        public void Dispose()
-        {
-            // No cambie este código. Coloque el código de limpieza en el anterior Dispose(colocación de bool).
-            Dispose(true);
-            // TODO: quite la marca de comentario de la siguiente línea si el finalizador se ha reemplazado antes.
-            // GC.SuppressFinalize(this);
-        }
-
-        #endregion IDisposable Support
     }
 }

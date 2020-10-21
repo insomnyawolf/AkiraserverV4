@@ -1,7 +1,8 @@
 ﻿using Extensions;
-using SuperSimpleHttpListener.Http.Helper;
+using AkiraserverV4.Http.Helper;
 using System.Collections.Generic;
 using System.Text;
+using static AkiraserverV4.Http.Helper.Mime;
 
 namespace AkiraserverV4.Http.Context.Responses
 {
@@ -49,11 +50,11 @@ namespace AkiraserverV4.Http.Context.Responses
             return headerBuilder.ToString();
         }
 
-        public void AddContentTypeHeader(string contentType)
+        public void AddContentTypeHeader(ContentType contentType)
         {
             if (!Headers.ContainsKey(Header.ContentType))
             {
-                Headers.Add(Header.ContentType, contentType);
+                Headers.Add(Header.ContentType, Mime.ToString(contentType));
             }
         }
 

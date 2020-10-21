@@ -81,9 +81,11 @@ namespace AkiraserverV4.Http
                 {
                     await RequestProcessing().ConfigureAwait(false);
                 }
-                catch (SocketException e)
+                catch (Exception e) when (e is SocketException || e is IOException)
                 {
+#if DEBUG
                     Logger.LogError(e.ToString());
+#endif
                 }
             }
 
@@ -148,8 +150,8 @@ namespace AkiraserverV4.Http
 
                     var response = new Response(Settings.ResponseSettings);
 
-                    using (var middleware = ContextBuilder.CreateContext(executedCommand?.ClassExecuted, Middleware, netStream, request, response, ServiceProvider))
-                    {
+                    var middleware = ContextBuilder.CreateContext(executedCommand?.ClassExecuted, Middleware, netStream, request, response, ServiceProvider);
+                    
                         if (request is null)
                         {
                             middleware.Context.Response.Body = await middleware.BadRequest(exception).ConfigureAwait(false);
@@ -177,7 +179,6 @@ namespace AkiraserverV4.Http
                         await middleware.Context.WriteBodyAsync().ConfigureAwait(false);
                         await middleware.Context.NetworkStream.FlushAsync().ConfigureAwait(false);
                     }
-                }
             }
         }
     }
