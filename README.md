@@ -2,8 +2,16 @@
 
 ## Objetive
 
-Spring/ASP.Net Clone
+Spring / ASP.Net Clone
 
 ## Status
 
-Work in progress, the base idea is there but i need to rewrite part of the core
+Looking Good => Seems usable for test projects =)
+
+## Examples
+
+You can find a simple example written in [SampleServer](https://github.com/insomnyawolf/AkiraserverV4/tree/master/SampleServer) folder.
+
+## Todo
+
+* Improve Middleware to suppor current request pre actions and post actions
