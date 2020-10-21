@@ -5,11 +5,11 @@
     "Ttl": 128,
     "UseOnlyOverlappedIO": false,
     "RequestSettings": {
-      "ReciveTimeout": 50,
+      "ReciveTimeout": 1000,
       "ReadPacketSize": 8192
     },
     "ResponseSettings": {
-      "SendTimeout": 50,
+      "SendTimeout": 1000,
       "StaticResponseHeaders": {
         "Access-Control-Allow-Origin": "*"
       }
