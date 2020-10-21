@@ -37,7 +37,7 @@ namespace AkiraserverV4.Http.BaseContext.Requests
 
             int dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, settings.ReadPacketSize, settings.ReciveTimeout).ConfigureAwait(false);
 
-            var temp = await ParseHeaders(currentBuffer, dataRead).ConfigureAwait(false);
+            var temp = await ParseFirstPacket(currentBuffer, dataRead).ConfigureAwait(false);
 
             long? bodySize = null;
 
@@ -48,8 +48,9 @@ namespace AkiraserverV4.Http.BaseContext.Requests
 
             int remeaning = settings.ReadPacketSize;
 
-            while (!bodySize.HasValue || bodySize > 0 && temp.Body.Position < bodySize)
+            while (dataRead == settings.ReadPacketSize)
             {
+#warning Check if this is worth
                 if (bodySize.HasValue)
                 {
                     remeaning = (int)(bodySize.Value - temp.Body.Position);
@@ -60,24 +61,13 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                     }
                 }
 
-                dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, (int)remeaning, settings.ReciveTimeout).ConfigureAwait(false);
-                await temp.Body.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
-                if (dataRead != currentBuffer.Length)
+                dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, remeaning, settings.ReciveTimeout).ConfigureAwait(false);
+
+                if (dataRead > 0)
                 {
-                    break;
+                    await temp.Body.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
                 }
             }
-
-            //while (true)
-            //{
-            //    dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, settings.ReciveTimeout).ConfigureAwait(false);
-            //    await RequestStream.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
-            //    if (dataRead != currentBuffer.Length)
-            //    {
-            //        break;
-            //    }
-            //}
-
 
             Request req = new Request()
             {
@@ -130,9 +120,9 @@ namespace AkiraserverV4.Http.BaseContext.Requests
             return result;
         }
 
-        private static async Task<RequestData> ParseHeaders(byte[] stream, int maxPosition)
+        private static async Task<RequestData> ParseFirstPacket(byte[] stream, int maxPosition)
         {
-            
+
 
             StringBuilder headersRaw = new StringBuilder();
 
@@ -193,12 +183,16 @@ namespace AkiraserverV4.Http.BaseContext.Requests
                 headers.RequestHeaders.Add(header[0], header[1]);
             }
 
-            MemoryStream body = null;
+            MemoryStream body;
 
             if (position < maxPosition)
             {
                 body = new MemoryStream();
                 await body.WriteAsync(stream, position, maxPosition - position).ConfigureAwait(false);
+            }
+            else
+            {
+                body = null;
             }
 
             var requestData = new RequestData()
