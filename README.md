@@ -14,4 +14,4 @@ You can find a simple example written in [SampleServer](https://github.com/insom
 
 ## Todo
 
-* Current Middleware Implementation just doesn't work at all
+* I have no idea atm
