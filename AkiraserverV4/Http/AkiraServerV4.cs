@@ -1,6 +1,6 @@
-﻿using AkiraserverV4.Http.BaseContext;
-using AkiraserverV4.Http.BaseContext.Requests;
-using AkiraserverV4.Http.BaseContext.Responses;
+﻿using AkiraserverV4.Http.Context;
+using AkiraserverV4.Http.Context.Requests;
+using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +24,7 @@ namespace AkiraserverV4.Http
         private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
         private readonly GeneralSettings Settings;
-        private Type Middleware;
+        private Type Middleware { get; set; }
 
         public AkiraServerV4(IServiceProvider serviceProvider)
         {
@@ -34,7 +34,7 @@ namespace AkiraserverV4.Http
 
             Settings = serviceProvider.GetRequiredService<IConfiguration>().GetSection("Server").Get<GeneralSettings>();
 
-            SetMiddleware<BaseContext.BaseContext>();
+            SetMiddleware<BaseMiddleware>();
 
             TcpListener = new TcpListener(localaddr: IPAddress.Any, port: Settings.Port);
 
@@ -95,7 +95,7 @@ namespace AkiraserverV4.Http
             IsListening = false;
         }
 
-        public void SetMiddleware<T>() where T : BaseContext.BaseContext
+        public void SetMiddleware<T>() where T : BaseMiddleware
         {
             Middleware = typeof(T);
         }
@@ -148,34 +148,34 @@ namespace AkiraserverV4.Http
 
                     var response = new Response(Settings.ResponseSettings);
 
-                    using (BaseContext.BaseContext context = ContextBuilder.CreateContext(executedCommand?.ClassExecuted ?? Middleware, netStream, request, response, ServiceProvider))
+                    using (var middleware = ContextBuilder.CreateContext(executedCommand?.ClassExecuted, Middleware, netStream, request, response, ServiceProvider))
                     {
                         if (request is null)
                         {
-                            context.Response.Body = await context.BadRequest(exception).ConfigureAwait(false);
+                            middleware.Context.Response.Body = await middleware.BadRequest(exception).ConfigureAwait(false);
                         }
                         else if (executedCommand is null)
                         {
-                            context.Response.Body = await context.NotFound(request).ConfigureAwait(false);
+                            middleware.Context.Response.Body = await middleware.NotFound(request).ConfigureAwait(false);
                         }
                         else
                         {
                             try
                             {
-                                context.Response.Body = await InvokeHandlerAsync(context, executedCommand).ConfigureAwait(false);
+                                middleware.Context.Response.Body = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
                             }
-                            catch (IOException e)
+                            catch (IOException)
                             {
                                 throw;
                             }
                             catch (Exception ex)
                             {
-                                context.Response.Body = await context.InternalServerError(ex).ConfigureAwait(false);
+                                middleware.Context.Response.Body = await middleware.InternalServerError(ex).ConfigureAwait(false);
                             }
                         }
 
-                        await context.WriteBodyAsync().ConfigureAwait(false);
-                        await context.NetworkStream.FlushAsync().ConfigureAwait(false);
+                        await middleware.Context.WriteBodyAsync().ConfigureAwait(false);
+                        await middleware.Context.NetworkStream.FlushAsync().ConfigureAwait(false);
                     }
                 }
             }

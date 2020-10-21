@@ -1,9 +1,9 @@
-﻿using AkiraserverV4.Http.BaseContext.Requests;
+﻿using AkiraserverV4.Http.Context.Requests;
 using System;
 
-namespace AkiraserverV4.Http.BaseContext
+namespace AkiraserverV4.Http.Context
 {
-    public abstract partial class Ctx
+    public partial class BaseContext
     {
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
         public sealed class ControllerAttribute : Attribute

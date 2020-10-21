@@ -1,4 +1,4 @@
-﻿using AkiraserverV4.Http.BaseContext;
+﻿using AkiraserverV4.Http.Context;
 using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.IO;
@@ -71,7 +71,7 @@ namespace SampleServer
         public void NotAuth()
         {
             _ = Request.Headers.Path.Length > 0;
-            Response.Status = AkiraserverV4.Http.BaseContext.Responses.HttpStatus.Unauthorized;
+            Response.Status = AkiraserverV4.Http.Context.Responses.HttpStatus.Unauthorized;
         }
 
         [Get("/[method]")]
@@ -122,7 +122,7 @@ namespace SampleServer
         //[NotFoundEndpoint]
         public string SampleFallback()
         {
-            Response.Status = AkiraserverV4.Http.BaseContext.Responses.HttpStatus.NotFound;
+            Response.Status = AkiraserverV4.Http.Context.Responses.HttpStatus.NotFound;
             return "Overwritten";
         }
     }

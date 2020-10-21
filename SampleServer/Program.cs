@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SampleServer.Middlewares;
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace SampleServer
         {
             AkiraServerV4 serv = new AkiraServerV4(ServiceProvider);
             serv.LoadRouting(Assembly.GetExecutingAssembly());
-            //serv.SetMiddleware<Middleware.Middleware>();
+            serv.SetMiddleware<Middleware>();
 
             Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>
             {

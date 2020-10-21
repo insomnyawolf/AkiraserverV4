@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace AkiraserverV4.Http.BaseContext.Responses
+namespace AkiraserverV4.Http.Context.Responses
 {
     public static class HttpStatusConvert
     {

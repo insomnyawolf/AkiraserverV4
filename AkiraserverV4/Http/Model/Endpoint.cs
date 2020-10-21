@@ -1,4 +1,4 @@
-﻿using AkiraserverV4.Http.BaseContext.Requests;
+﻿using AkiraserverV4.Http.Context.Requests;
 using System;
 using System.Reflection;
 
@@ -16,7 +16,7 @@ namespace AkiraserverV4.Http.Model
     // What to execute
     public class ExecutedCommand
     {
-        public MethodInfo MethodInfo { get; set; }
+        public ParameterInfo[] ParameterInfo { get; set; }
         public object MethodExecuted { get; set; }
         public Attribute[] Attributes { get; set; }
         public Type ClassExecuted { get; set; }

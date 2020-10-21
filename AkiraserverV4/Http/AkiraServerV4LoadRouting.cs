@@ -1,13 +1,14 @@
-﻿using AkiraserverV4.Http.BaseContext.Requests;
+﻿using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Model;
 using Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
-using static AkiraserverV4.Http.BaseContext.Ctx;
+using static AkiraserverV4.Http.Context.BaseContext;
 
 namespace AkiraserverV4.Http
 {
@@ -48,7 +49,7 @@ namespace AkiraserverV4.Http
                                 endpoints.Add(new Endpoint()
                                 {
                                     ClassExecuted = currentClass,
-                                    MethodInfo = currentMethod,
+                                    ParameterInfo = currentMethod.GetParameters().ToArray(),
                                     MethodExecuted = currentMethod.CreateReflectedDelegate(),
                                     Method = endpointAttribute.Method,
                                     Path = path,

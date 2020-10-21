@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace AkiraserverV4.Http.BaseContext.Requests
+namespace AkiraserverV4.Http.Context.Requests
 {
     public class Headers
     {

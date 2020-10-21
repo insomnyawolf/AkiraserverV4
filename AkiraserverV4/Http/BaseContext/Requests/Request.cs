@@ -1,20 +1,15 @@
 ﻿using AkiraserverV4.Http.Exceptions;
-using AkiraserverV4.Http.Helper;
 using SuperSimpleHttpListener.Http.Helper;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Web;
-using System.Xml.Serialization;
 
-namespace AkiraserverV4.Http.BaseContext.Requests
+namespace AkiraserverV4.Http.Context.Requests
 {
     public partial class Request
     {

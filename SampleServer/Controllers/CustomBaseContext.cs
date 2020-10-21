@@ -1,5 +1,5 @@
-﻿using AkiraserverV4.Http.BaseContext;
-using AkiraserverV4.Http.BaseContext.Requests;
+﻿using AkiraserverV4.Http.Context;
+using AkiraserverV4.Http.Context.Requests;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;

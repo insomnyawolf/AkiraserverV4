@@ -3,7 +3,7 @@ using SuperSimpleHttpListener.Http.Helper;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AkiraserverV4.Http.BaseContext.Responses
+namespace AkiraserverV4.Http.Context.Responses
 {
     public partial class Response
     {

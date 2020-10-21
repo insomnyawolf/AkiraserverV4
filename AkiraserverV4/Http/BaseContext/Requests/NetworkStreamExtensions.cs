@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace AkiraserverV4.Http.BaseContext.Requests
+namespace AkiraserverV4.Http.Context.Requests
 {
     public static class TcpStreamExtension
     {
