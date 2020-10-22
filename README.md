@@ -16,3 +16,4 @@ You can find a simple example written in [SampleServer](https://github.com/insom
 
 * Implement MultipartForm parsing
 * Map parameters from body forms
+* Authentication Layer
