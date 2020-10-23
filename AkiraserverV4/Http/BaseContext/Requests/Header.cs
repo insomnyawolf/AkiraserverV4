@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AkiraserverV4.Http.Context.Requests
 {
-    public class Headers
+    public class Header
     {
         public HttpMethod Method { get; set; }
         public string Path { get; set; }
@@ -14,7 +14,7 @@ namespace AkiraserverV4.Http.Context.Requests
 
     public class RequestData
     {
-        public Headers Headers { get; set; }
+        public Header Headers { get; set; }
         public MemoryStream Body { get; set; }
     }
 }

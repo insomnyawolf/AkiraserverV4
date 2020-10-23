@@ -7,6 +7,7 @@ namespace AkiraserverV4.Http.Helper
     {
         private static readonly Dictionary<ContentType, string> MimeString = new Dictionary<ContentType, string>()
         {
+            { ContentType.Invalid ,string.Empty },
             { ContentType.AAC ,"audio/aac" },
             { ContentType.AbiWord ,"application/x-abiword" },
             { ContentType.AVI ,"video/x-msvideo" },
@@ -64,7 +65,7 @@ namespace AkiraserverV4.Http.Helper
             { ContentType.Container3GPP2Audio ,"audio/3gpp2" },
             { ContentType.Compressed7Zip ,"application/x-7z-compressed" },
             { ContentType.FormUrlEncoded ,"application/x-www-form-urlencoded" },
-            { ContentType.FormMultipart ,"multipart/form-data; boundary=" },
+            { ContentType.FormMultipart ,"multipart/form-data" },
             { ContentType.PlainText ,"text/plain" },
         };
 

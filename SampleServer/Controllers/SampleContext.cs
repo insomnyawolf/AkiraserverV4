@@ -70,7 +70,7 @@ namespace SampleServer
         [Get("/[method]")]
         public void NotAuth()
         {
-            _ = Request.Headers.Path.Length > 0;
+            _ = Request.Header.Path.Length > 0;
             Response.Status = AkiraserverV4.Http.Context.Responses.HttpStatus.Unauthorized;
         }
 
@@ -100,7 +100,7 @@ namespace SampleServer
         [Get("/Request")]
         public string RequestMethod()
         {
-            return JsonSerializer.Serialize(Request.Headers);
+            return JsonSerializer.Serialize(Request.Header);
         }
 
         [Get("/[method]")]
@@ -108,7 +108,7 @@ namespace SampleServer
         {
 #warning need To Implement This Example
             byte[] test = new byte[100000000];
-            Response.AddContentLenghtHeader(test.Length);
+            Response.AddContentLenght(test.Length);
             await WriteDataAsync(test);
         }
 

@@ -1,8 +1,10 @@
-﻿using AkiraserverV4.Http.Context;
+﻿using AkiraserverV4.Http.Helper;
 using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace SampleServer
 {
@@ -10,9 +12,39 @@ namespace SampleServer
     public class ConvertContext : CustomBaseContext
     {
         [Post("/[method]")]
-        public object UrlEncoded()
+        public async Task<object> UrlEncoded()
         {
-            return new JsonResult(Request.ReadUrlEncodedPayload());
+            return new JsonResult(await Request.ReadUrlEncodedPayload().ConfigureAwait(false));
+        }
+
+        [Post("/[method]")]
+        public async Task<FileResponse> MultipartEncoded()
+        {
+            var data = await Request.ReadMultipartPayload().ConfigureAwait(false);
+
+            if (data.FormFile.Count == 0)
+            {
+                return null;
+            }
+
+            var file = data.FormFile[0];
+
+            var savePath = @"M:\Code\C#\AkiraServerV4Other\tests";
+
+            using (var fileStream = File.Create(Path.Combine(savePath, file.Filename)))
+            {
+                file.Content.Position = 0;
+                file.Content.CopyTo(fileStream);
+                fileStream.Close();
+            }
+                
+
+            return new FileResponse()
+            {
+                ContentType = file.ContentType,
+                Content = file.Content,
+                Filename = file.Filename,           
+            };
         }
 
         [Post("/[method]")]

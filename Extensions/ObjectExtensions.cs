@@ -35,7 +35,7 @@ namespace Extensions
             }
         }
 
-        public static Stream ToStream<TClass>(this TClass source)
+        public static MemoryStream ToStream<TClass>(this TClass source)
         {
             if (!typeof(TClass).IsSerializable)
             {
@@ -49,7 +49,7 @@ namespace Extensions
             }
 
             IFormatter formatter = new BinaryFormatter();
-            using (Stream stream = new MemoryStream())
+            using (MemoryStream stream = new MemoryStream())
             {
                 formatter.Serialize(stream, source);
                 stream.Seek(0, SeekOrigin.Begin);

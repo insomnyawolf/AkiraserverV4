@@ -12,7 +12,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using static AkiraserverV4.Http.Helper.Mime;
 
 namespace AkiraserverV4.Http.Context
 {
@@ -40,6 +39,16 @@ namespace AkiraserverV4.Http.Context
             {
                 await SendResponseResultAsync(responseResult).ConfigureAwait(false);
             }
+            else if (data is BinaryResponseResult binaryResponse)
+            {
+                await binaryResponse.CustomResponse(this).ConfigureAwait(false);
+                await WriteDataAsync(binaryResponse.Content).ConfigureAwait(false);
+
+            }
+            else if (data is MemoryStream stream)
+            {
+                await WriteDataAsync(stream).ConfigureAwait(false);
+            }
             else if (data is object)
             {
                 await SendTextAsync(data).ConfigureAwait(false);
@@ -48,13 +57,17 @@ namespace AkiraserverV4.Http.Context
 
         public async Task WriteDataAsync(byte[] data)
         {
-            await WriteDataAsync(new MemoryStream(data)).ConfigureAwait(false);
+            await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+            await NetworkStream.FlushAsync().ConfigureAwait(false);
         }
 
-        public async Task WriteDataAsync(Stream data)
+        public async Task WriteDataAsync(MemoryStream data)
         {
             await WriteHeadersAsync().ConfigureAwait(false);
+
+            data.Position = 0;
             await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
+            await NetworkStream.FlushAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -75,7 +88,7 @@ namespace AkiraserverV4.Http.Context
 
         internal async Task SendResponseResultAsync<T>(T data) where T : ResponseResult
         {
-            Response.AddContentTypeHeader(data.ContentType);
+            Response.AddContentType(data.ContentType);
             await SendTextAsync(data.Serialize()).ConfigureAwait(false);
         }
 
@@ -83,19 +96,19 @@ namespace AkiraserverV4.Http.Context
         {
 #warning Moove to constants / enum
 
-            Response.AddContentTypeHeader(ContentType.PlainText);
+            Response.AddContentType(ContentType.PlainText);
             byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
-            Response.AddContentLenghtHeader(responseBytes.Length);
+            Response.AddContentLenght(responseBytes.Length);
             await WriteDataAsync(responseBytes).ConfigureAwait(false);
         }
 
         internal async Task SendRawAsync(object data)
         {
-            using (Stream dataStream = data.ToStream())
+            using (MemoryStream dataStream = data.ToStream())
             {
-                Response.AddContentLenghtHeader(Convert.ToInt32(dataStream.Length));
+                Response.AddContentLenght(Convert.ToInt32(dataStream.Length));
 #warning Moove to constants / enum
-                Response.AddContentTypeHeader(ContentType.Binary);
+                Response.AddContentType(ContentType.Binary);
 
                 await WriteDataAsync(dataStream).ConfigureAwait(false);
             }
@@ -165,9 +178,9 @@ namespace AkiraserverV4.Http.Context
                         }
                     }
                 }
-                else if (request.Headers.RequestHeaders.ContainsKey(Header.ContentType))
+                else if (request.Header.RequestHeaders.ContainsKey(HeaderNames.ContentType))
                 {
-                    var contentTypeHeader = request.Headers.RequestHeaders[Header.ContentType];
+                    var contentTypeHeader = request.Header.RequestHeaders[HeaderNames.ContentType];
                     //if (contentTypeHeader)
                     //{
 

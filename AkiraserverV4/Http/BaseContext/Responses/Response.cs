@@ -2,7 +2,6 @@
 using AkiraserverV4.Http.Helper;
 using System.Collections.Generic;
 using System.Text;
-using static AkiraserverV4.Http.Helper.Mime;
 
 namespace AkiraserverV4.Http.Context.Responses
 {
@@ -34,7 +33,7 @@ namespace AkiraserverV4.Http.Context.Responses
                 string key = header.Key;
                 string value = header.Value;
 
-                if (key == Header.ContentLength && Status == HttpStatus.NoContent)
+                if (key == HeaderNames.ContentLength && Status == HttpStatus.NoContent)
                 {
                     value = "0";
                 }
@@ -50,19 +49,27 @@ namespace AkiraserverV4.Http.Context.Responses
             return headerBuilder.ToString();
         }
 
-        public void AddContentTypeHeader(ContentType contentType)
+        public void AddContentType(ContentType contentType)
         {
-            if (!Headers.ContainsKey(Header.ContentType))
+            if (!Headers.ContainsKey(HeaderNames.ContentType))
             {
-                Headers.Add(Header.ContentType, Mime.ToString(contentType));
+                Headers.Add(HeaderNames.ContentType, Mime.ToString(contentType));
             }
         }
 
-        public void AddContentLenghtHeader(int lenght)
+        public void AddContentLenght(int lenght)
         {
-            if (!Headers.ContainsKey(Header.ContentLength))
+            if (!Headers.ContainsKey(HeaderNames.ContentLength))
             {
-                Headers.Add(Header.ContentLength, lenght.ToString());
+                Headers.Add(HeaderNames.ContentLength, lenght.ToString());
+            }
+        }
+
+        public void AddContentDisposition(string value)
+        {
+            if (!Headers.ContainsKey(HeaderNames.ContentDisposition))
+            {
+                Headers.Add(HeaderNames.ContentDisposition, value);
             }
         }
     }

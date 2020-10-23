@@ -1,6 +1,7 @@
 ﻿using AkiraserverV4.Http.Context;
 using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Context.Responses;
+using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.Configuration;
@@ -136,7 +137,12 @@ namespace AkiraserverV4.Http
                     Exception exception = null;
                     try
                     {
+#if DEBUG
+                        request = await Request.BuildRequest(netStream, Settings.RequestSettings, ServiceProvider.GetRequiredService<ILogger<Request>>()).ConfigureAwait(false);
+                        //request.LogPacket();
+#else
                         request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
+#endif
                     }
                     catch (Exception e)
                     {
@@ -151,34 +157,35 @@ namespace AkiraserverV4.Http
                     var response = new Response(Settings.ResponseSettings);
 
                     var middleware = ContextBuilder.CreateContext(executedCommand?.ClassExecuted, Middleware, netStream, request, response, ServiceProvider);
-                    
-                        if (request is null)
-                        {
-                            middleware.Context.Response.Body = await middleware.BadRequest(exception).ConfigureAwait(false);
-                        }
-                        else if (executedCommand is null)
-                        {
-                            middleware.Context.Response.Body = await middleware.NotFound(request).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            try
-                            {
-                                middleware.Context.Response.Body = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
-                            }
-                            catch (IOException)
-                            {
-                                throw;
-                            }
-                            catch (Exception ex)
-                            {
-                                middleware.Context.Response.Body = await middleware.InternalServerError(ex).ConfigureAwait(false);
-                            }
-                        }
 
-                        await middleware.Context.WriteBodyAsync().ConfigureAwait(false);
-                        await middleware.Context.NetworkStream.FlushAsync().ConfigureAwait(false);
+
+                    if (executedCommand is null)
+                    {
+                        middleware.Context.Response.Body = await middleware.NotFound(request).ConfigureAwait(false);
                     }
+                    else
+                    {
+                        try
+                        {
+                            middleware.Context.Response.Body = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+                        }
+                        catch (MalformedRequestException MalformedRequestException)
+                        {
+                            middleware.Context.Response.Body = await middleware.BadRequest(MalformedRequestException).ConfigureAwait(false);
+                        }
+                        catch (IOException)
+                        {
+                            throw;
+                        }
+                        catch (Exception ex)
+                        {
+                            middleware.Context.Response.Body = await middleware.InternalServerError(ex).ConfigureAwait(false);
+                        }
+                    }
+
+                    await middleware.Context.WriteBodyAsync().ConfigureAwait(false);
+                    await middleware.Context.NetworkStream.FlushAsync().ConfigureAwait(false);
+                }
             }
         }
     }

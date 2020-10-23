@@ -1,10 +1,8 @@
 ﻿using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Helper;
-using AkiraserverV4.Http.Helper;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,14 +12,20 @@ namespace AkiraserverV4.Http.Context.Requests
 {
     public partial class Request
     {
-        private static readonly char[] HeaderDelimiter = "\r\n\r\n".ToCharArray();
-        public Headers Headers { get; set; }
+        private static readonly char[] HttpDelimiter = "\r\n\r\n".ToCharArray();
+        public Header Header { get; set; }
+#if DEBUG
+        [System.Text.Json.Serialization.JsonIgnore]
+#endif
         public MemoryStream Body { get; set; }
         public List<FormInput> UrlQuery { get; private set; }
 
-
-        public static async Task<Request> BuildRequest(NetworkStream networkStream, RequestSettings settings)
+        public static async Task<Request> BuildRequest(NetworkStream networkStream, RequestSettings settings, Request req = null)
         {
+            if(req is null)
+            {
+                    req = new Request();
+            }
 
             if (networkStream is null)
             {
@@ -37,16 +41,15 @@ namespace AkiraserverV4.Http.Context.Requests
 
             long? bodySize = null;
 
-            if (temp.Headers.RequestHeaders.ContainsKey(Header.ContentLength))
+            if (temp.Headers.RequestHeaders.ContainsKey(Context.HeaderNames.ContentLength))
             {
-                bodySize = long.Parse(temp.Headers.RequestHeaders[Header.ContentLength]);
+                bodySize = long.Parse(temp.Headers.RequestHeaders[Context.HeaderNames.ContentLength]);
             }
 
             int remeaning = settings.ReadPacketSize;
 
-            while (dataRead == settings.ReadPacketSize)
+            while (remeaning > 0 && dataRead > 0)
             {
-#warning Check if this is worth
                 if (bodySize.HasValue)
                 {
                     remeaning = (int)(bodySize.Value - temp.Body.Position);
@@ -65,11 +68,8 @@ namespace AkiraserverV4.Http.Context.Requests
                 }
             }
 
-            Request req = new Request()
-            {
-                Headers = temp.Headers,
-                Body = temp.Body,
-            };
+            req.Header = temp.Headers;
+            req.Body = temp.Body;
 
             req.ParseUrlQuery();
 
@@ -78,11 +78,11 @@ namespace AkiraserverV4.Http.Context.Requests
 
         private void ParseUrlQuery()
         {
-            string[] query = Headers.Path.Split('?', StringSplitOptions.RemoveEmptyEntries);
+            string[] query = Header.Path.Split('?', StringSplitOptions.RemoveEmptyEntries);
 
             if (query.Length > 0)
             {
-                Headers.Path = query[0];
+                Header.Path = query[0];
             }
 
             if (query.Length > 1)
@@ -122,7 +122,7 @@ namespace AkiraserverV4.Http.Context.Requests
 
             StringBuilder headersRaw = new StringBuilder();
 
-            char[] checkGroup = new char[HeaderDelimiter.Length];
+            char[] checkGroup = new char[HttpDelimiter.Length];
 
             int position = 0;
             while (position < maxPosition)
@@ -138,7 +138,7 @@ namespace AkiraserverV4.Http.Context.Requests
 
                 position++;
 
-                if (HeaderDelimiter.PatternEquals(checkGroup))
+                if (HttpDelimiter.PatternEquals(checkGroup))
                 {
                     break;
                 }
@@ -160,7 +160,7 @@ namespace AkiraserverV4.Http.Context.Requests
                 throw new MalformedRequestException();
             }
 
-            var headers = new Headers()
+            var headers = new Header()
             {
                 Method = HttpMethodConvert.FromString(firstLine[0]),
                 Path = firstLine[1],

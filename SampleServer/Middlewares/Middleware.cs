@@ -27,7 +27,7 @@ namespace SampleServer.Middlewares
         public override async Task<object> NotFound(Request request)
         {
             Context.Response.Status = HttpStatus.NotFound;
-            return $"404 NotFound => {request.Headers.Method} {request.Headers.Path}";
+            return $"404 NotFound => {request.Header.Method} {request.Header.Path}";
         }
 
         public override async Task<object> InternalServerError(Exception exception)
