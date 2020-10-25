@@ -64,6 +64,14 @@ namespace AkiraserverV4.Http.Context.Responses
             }
         }
 
+        public void AddContentLenght(long lenght)
+        {
+            if (!Headers.ContainsKey(HeaderNames.ContentLength))
+            {
+                Headers.Add(HeaderNames.ContentLength, lenght.ToString());
+            }
+        }
+
         public void AddContentDisposition(string value)
         {
             if (!Headers.ContainsKey(HeaderNames.ContentDisposition))

@@ -16,7 +16,7 @@ namespace AkiraserverV4.Http.SerializeHelpers
             Content = obj;
         }
 
-        public abstract string Serialize();
+        public abstract Task<Stream> Serialize();
     }
 
     public abstract class BinaryResponseResult

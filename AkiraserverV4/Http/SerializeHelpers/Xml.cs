@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Text.Json;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 using AkiraserverV4.Http.Helper;
 
@@ -14,12 +14,12 @@ namespace AkiraserverV4.Http.SerializeHelpers
             ContentType = ContentType.XML;
         }
 
-        public override string Serialize()
+        public override async Task<Stream> Serialize()
         {
-            using var stringwriter = new StringWriter();
             var serializer = new XmlSerializer(Content?.GetType() ?? TypeOfObject);
-            serializer.Serialize(stringwriter, Content);
-            return stringwriter.ToString();
+            var ms = new MemoryStream();
+            serializer.Serialize(ms, Content);
+            return ms;
         }
     }
 

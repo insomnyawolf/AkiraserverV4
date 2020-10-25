@@ -46,30 +46,18 @@ namespace AkiraserverV4.Http.Context
             {
                 await WriteDataAsync(stream).ConfigureAwait(false);
             }
+            else if (bodyContent is string str)
+            {
+                await SendTextAsync(str).ConfigureAwait(false);
+            }
             else if (bodyContent is null)
             {
                 bodyContent = "null";
             }
-            await SendTextAsync(bodyContent).ConfigureAwait(false);
-        }
-
-        public async Task WriteDataAsync(byte[] data)
-        {
-            await WriteHeadersAsync().ConfigureAwait(false);
-
-            await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
-            await NetworkStream.FlushAsync().ConfigureAwait(false);
-        }
-
-        public async Task WriteDataAsync(MemoryStream data)
-        {
-            await WriteHeadersAsync().ConfigureAwait(false);
-
-            // is this really that good?
-
-            data.Position = 0;
-            await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
-            await NetworkStream.FlushAsync().ConfigureAwait(false);
+            else
+            {
+                await SendTextAsync(bodyContent.ToString()).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -91,29 +79,38 @@ namespace AkiraserverV4.Http.Context
         internal async Task SendResponseResultAsync<T>(T data) where T : ResponseResult
         {
             Response.AddContentType(data.ContentType);
-            await SendTextAsync(data.Serialize()).ConfigureAwait(false);
+            var stream = await data.Serialize().ConfigureAwait(false);
+            await WriteDataAsync(stream).ConfigureAwait(false);
         }
 
-        internal async Task SendTextAsync(object input)
+        internal async Task SendTextAsync(string input)
         {
-#warning Moove to constants / enum
-
             Response.AddContentType(ContentType.PlainText);
-            byte[] responseBytes = Encoding.UTF8.GetBytes(Convert.ToString(input));
-            Response.AddContentLenght(responseBytes.Length);
-            await WriteDataAsync(responseBytes).ConfigureAwait(false);
+            Response.AddContentLenght(input.Length);
+
+            await WriteHeadersAsync().ConfigureAwait(false);
+            var writer = new StreamWriter(NetworkStream);
+            await writer.WriteAsync(input).ConfigureAwait(false);
+            await writer.FlushAsync().ConfigureAwait(false);
         }
 
-        internal async Task SendRawAsync(object data)
+        public async Task WriteDataAsync(byte[] data)
         {
-            using (MemoryStream dataStream = data.ToStream())
-            {
-                Response.AddContentLenght(Convert.ToInt32(dataStream.Length));
-#warning Moove to constants / enum
-                Response.AddContentType(ContentType.Binary);
+            await WriteHeadersAsync().ConfigureAwait(false);
 
-                await WriteDataAsync(dataStream).ConfigureAwait(false);
-            }
+            await NetworkStream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+            await NetworkStream.FlushAsync().ConfigureAwait(false);
+        }
+
+        public async Task WriteDataAsync(Stream data)
+        {
+            await WriteHeadersAsync().ConfigureAwait(false);
+
+            // is this really that good?
+
+            data.Position = 0;
+            await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
+            await NetworkStream.FlushAsync().ConfigureAwait(false);
         }
     }
 }

@@ -135,6 +135,9 @@ namespace AkiraserverV4.Http
                     ExecutedCommand executedCommand = null;
                     Request request = null;
                     Exception exception = null;
+
+                    
+
                     try
                     {
 #if DEBUG
@@ -144,9 +147,9 @@ namespace AkiraserverV4.Http
                         request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
 #endif
                     }
-                    catch (Exception e)
+                    catch (MalformedRequestException MalformedRequestException)
                     {
-                        exception = e;
+                        exception = MalformedRequestException;
                     }
 
                     if (request is not null && RequestedEndpoint(request) is ExecutedCommand executedCommand1)
@@ -160,7 +163,12 @@ namespace AkiraserverV4.Http
 
                     object bodyContent;
                     bool isReturnTypeVoid = false;
-                    if (executedCommand is null)
+
+                    if (exception is not null)
+                    {
+                        bodyContent = await middleware.BadRequest(exception).ConfigureAwait(false);
+                    }
+                    else if (executedCommand is null)
                     {
                         bodyContent = await middleware.NotFound(request).ConfigureAwait(false);
                         
@@ -173,10 +181,7 @@ namespace AkiraserverV4.Http
                             isReturnTypeVoid = temp.IsReturnTypeVoid;
                             bodyContent = temp.ReturnValue;
                         }
-                        catch (MalformedRequestException MalformedRequestException)
-                        {
-                            bodyContent = await middleware.BadRequest(MalformedRequestException).ConfigureAwait(false);
-                        }
+                        
                         catch (IOException)
                         {
                             throw;
@@ -188,7 +193,6 @@ namespace AkiraserverV4.Http
                     }
 
                     await middleware.Context.WriteBodyAsync(isReturnTypeVoid, bodyContent).ConfigureAwait(false);
-                    await middleware.Context.NetworkStream.FlushAsync().ConfigureAwait(false);
                 }
             }
         }

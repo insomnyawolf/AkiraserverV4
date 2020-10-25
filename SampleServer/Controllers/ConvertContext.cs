@@ -3,6 +3,7 @@ using AkiraserverV4.Http.SerializeHelpers;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -51,6 +52,20 @@ namespace SampleServer
             };
 
             //return null;
+        }
+
+        private static Random random = new Random();
+        [Post("/[method]")]
+        public async Task<string> LargeResponse()
+        {
+            return RandomString(100000000);
+
+            static string RandomString(int length)
+            {
+                const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                return new string(Enumerable.Repeat(chars, length)
+                  .Select(s => s[random.Next(s.Length)]).ToArray());
+            }
         }
 
         [Post("/[method]")]

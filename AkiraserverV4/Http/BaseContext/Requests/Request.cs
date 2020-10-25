@@ -191,16 +191,11 @@ namespace AkiraserverV4.Http.Context.Requests
                 headers.RequestHeaders.Add(header[0], header[1]);
             }
 
-            MemoryStream body;
+            MemoryStream body = new MemoryStream();
 
             if (position < maxPosition)
             {
-                body = new MemoryStream();
                 await body.WriteAsync(stream, position, maxPosition - position).ConfigureAwait(false);
-            }
-            else
-            {
-                body = null;
             }
 
             var requestData = new RequestData()

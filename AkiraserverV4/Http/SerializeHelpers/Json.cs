@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using AkiraserverV4.Http.Helper;
 
 namespace AkiraserverV4.Http.SerializeHelpers
@@ -11,9 +13,11 @@ namespace AkiraserverV4.Http.SerializeHelpers
             ContentType = ContentType.JSON;
         }
 
-        public override string Serialize()
+        public override async Task<Stream> Serialize()
         {
-            return JsonSerializer.Serialize(Content);
+            var ms = new MemoryStream();
+            await JsonSerializer.SerializeAsync(ms, Content).ConfigureAwait(false);
+            return ms;
         }
     }
 
