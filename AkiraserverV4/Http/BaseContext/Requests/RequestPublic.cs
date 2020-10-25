@@ -126,6 +126,7 @@ namespace AkiraserverV4.Http.Context.Requests
             var httpDelimiter = httpDelimiterConverted();
 
             int[] checkGroup = new int[boundary.Length];
+            int[] tempBuffer = new int[boundary.Length];
 
             var body = RawPayload;
 
@@ -252,7 +253,7 @@ namespace AkiraserverV4.Http.Context.Requests
             {
                 nextChar = checkGroup[0];
 
-                checkGroup.ShiftLeft(1);
+                checkGroup = checkGroup.ShiftLeft(1, tempBuffer);
 
                 position++;
 

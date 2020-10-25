@@ -27,25 +27,30 @@ namespace SampleServer
                 return null;
             }
 
-            var file = data.FormFile[0];
+            const string savePath = @"M:\Code\C#\AkiraServerV4Other\tests";
 
-            var savePath = @"M:\Code\C#\AkiraServerV4Other\tests";
-
-            using (var fileStream = File.Create(Path.Combine(savePath, file.Filename)))
+            foreach (var file in data.FormFile)
             {
-                await file.CopyToAsync(fileStream).ConfigureAwait(false);
-                fileStream.Close();
+                using (var fileStream = File.Create(Path.Combine(savePath, file.Filename)))
+                {
+                    await file.CopyToAsync(fileStream).ConfigureAwait(false);
+                    fileStream.Close();
+                }
             }
-                
 
-            //return new FileResponse()
-            //{
-            //    ContentType = file.ContentType,
-            //    Content = file.Content,
-            //    Filename = file.Filename,           
-            //};
+            var selectedFile = data.FormFile[new Random().Next(0, data.FormFile.Count)];
 
-            return null;
+            var buffer = new MemoryStream();
+            await selectedFile.CopyToAsync(buffer).ConfigureAwait(false);
+
+            return new FileResponse()
+            {
+                ContentType = selectedFile.ContentType,
+                Content = buffer,
+                Filename = selectedFile.Filename,
+            };
+
+            //return null;
         }
 
         [Post("/[method]")]

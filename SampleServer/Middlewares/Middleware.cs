@@ -13,9 +13,9 @@ namespace SampleServer.Middlewares
     {
         private static readonly ILogger<Middleware> Logger = Program.ServiceProvider.GetRequiredService<ILogger<Middleware>>();
 
-        public override async Task<object> ActionExecuting(ExecutedCommand executedCommand)
+        public override async Task<ExecutionStatus> ActionExecuting(ExecutedCommand executedCommand)
         {
-            return await Context.InvokeHandlerAsync(executedCommand).ConfigureAwait(false);
+            return await InvokeNamedParams(Context, executedCommand).ConfigureAwait(false);
         }
 
         public override async Task<object> BadRequest(Exception exception)

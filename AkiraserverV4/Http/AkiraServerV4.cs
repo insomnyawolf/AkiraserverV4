@@ -158,20 +158,24 @@ namespace AkiraserverV4.Http
 
                     var middleware = ContextBuilder.CreateContext(executedCommand?.ClassExecuted, Middleware, netStream, request, response, ServiceProvider);
 
-
+                    object bodyContent;
+                    bool isReturnTypeVoid = false;
                     if (executedCommand is null)
                     {
-                        middleware.Context.Response.Body = await middleware.NotFound(request).ConfigureAwait(false);
+                        bodyContent = await middleware.NotFound(request).ConfigureAwait(false);
+                        
                     }
                     else
                     {
                         try
                         {
-                            middleware.Context.Response.Body = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+                            var temp = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+                            isReturnTypeVoid = temp.IsReturnTypeVoid;
+                            bodyContent = temp.ReturnValue;
                         }
                         catch (MalformedRequestException MalformedRequestException)
                         {
-                            middleware.Context.Response.Body = await middleware.BadRequest(MalformedRequestException).ConfigureAwait(false);
+                            bodyContent = await middleware.BadRequest(MalformedRequestException).ConfigureAwait(false);
                         }
                         catch (IOException)
                         {
@@ -179,11 +183,11 @@ namespace AkiraserverV4.Http
                         }
                         catch (Exception ex)
                         {
-                            middleware.Context.Response.Body = await middleware.InternalServerError(ex).ConfigureAwait(false);
+                            bodyContent = await middleware.InternalServerError(ex).ConfigureAwait(false);
                         }
                     }
 
-                    await middleware.Context.WriteBodyAsync().ConfigureAwait(false);
+                    await middleware.Context.WriteBodyAsync(isReturnTypeVoid, bodyContent).ConfigureAwait(false);
                     await middleware.Context.NetworkStream.FlushAsync().ConfigureAwait(false);
                 }
             }

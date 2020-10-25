@@ -16,6 +16,7 @@ You can find a simple example written in [SampleServer](https://github.com/insom
 
 * Map parameters from body forms
 * Authentication Layer
-* Optimize MultipartForm File Handling
+* Fix MultipartForm File Handling
+  * Not Parsing Requests Like It Should
   * Reuse the same steam and use only the part needed (Done)
   * Still Performs Like Shit

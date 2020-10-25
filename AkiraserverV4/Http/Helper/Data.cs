@@ -64,15 +64,16 @@ namespace AkiraserverV4.Http.Helper
             return true;
         }
 
-        public static void ShiftLeft<T>(this T[] arr, int shifts)
+        public static T[] ShiftLeft<T>(this T[] arr, int shifts, T[] tempBuffer)
         {
-            Array.Copy(arr, shifts, arr, 0, arr.Length - shifts);
+            Array.Copy(arr, shifts, tempBuffer, 0, arr.Length - shifts);
+            return tempBuffer;
         }
 
-        public static void ShiftRight<T>(this T[] arr, int shifts)
-        {
-            Array.Copy(arr, 0, arr, shifts, arr.Length - shifts);
-        }
+        //public static void ShiftRight<T>(this T[] arr, int shifts)
+        //{
+        //    Array.Copy(arr, 0, arr, shifts, arr.Length - shifts);
+        //}
 
         // Can't Understand The Logic Behind
 
