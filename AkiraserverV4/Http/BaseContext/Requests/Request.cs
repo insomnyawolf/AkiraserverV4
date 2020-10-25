@@ -13,6 +13,18 @@ namespace AkiraserverV4.Http.Context.Requests
     public partial class Request
     {
         private static readonly char[] HttpDelimiter = "\r\n\r\n".ToCharArray();
+        private static readonly int[] HttpDelimiterBinary = HttpDelimiterBinaryInit();
+
+        private static int[] HttpDelimiterBinaryInit()
+        {
+            var arr = new int[HttpDelimiter.Length];
+            for (int i = 0; i < HttpDelimiter.Length; i++)
+            {
+                arr[i] = HttpDelimiter[i];
+            }
+            return arr;
+        }
+
         public Header Header { get; set; }
 #if DEBUG
         [System.Text.Json.Serialization.JsonIgnore]

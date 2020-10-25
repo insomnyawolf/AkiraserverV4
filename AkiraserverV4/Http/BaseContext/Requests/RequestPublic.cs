@@ -98,16 +98,39 @@ namespace AkiraserverV4.Http.Context.Requests
                 throw new BadRequestException();
             }
 
-            var boundaryStr = "--" + parts[1];
-            var boundary = boundaryStr.ToCharArray();
-            char[] checkGroup = new char[boundary.Length + 1];
+            int[] getBoundary()
+            {
+                var boundaryStr = "--" + parts[1];
+                var boundaryTemp = boundaryStr.ToCharArray();
+                var boundary = new int[boundaryTemp.Length];
+
+                for (int i = 0; i < boundaryTemp.Length; i++)
+                {
+                    boundary[i] = boundaryTemp[i];
+                }
+                return boundary;
+            }
+
+            int[] httpDelimiterConverted()
+            {
+                var httpDelimiter = new int[HttpDelimiter.Length];
+
+                for (int i = 0; i < httpDelimiter.Length; i++)
+                {
+                    httpDelimiter[i] = HttpDelimiter[i];
+                }
+                return httpDelimiter;
+            }
+
+            var boundary = getBoundary();
+            var httpDelimiter = httpDelimiterConverted();
+
+            int[] checkGroup = new int[boundary.Length];
 
             var body = RawPayload;
 
-
-            BaseFormInput current = null;
             Form form = new Form();
-
+            BaseFormInput current = null;
             StringBuilder temp = new StringBuilder();
 
             bool seeking = true;
@@ -115,43 +138,43 @@ namespace AkiraserverV4.Http.Context.Requests
             long fileInitPosition = 0;
             long fileEndPosition = 0;
 
-            long positionDetected = 0;
+            long nextElementPosition = 0;
 
-            long position = -checkGroup.Length + 1;
+            long position = -checkGroup.Length;
+
+            int nextChar;
 
             bool blockPositionDetector = false;
 
-            while (position < body.Length + checkGroup.Length)
+            while (position < body.Length - checkGroup.Length)
             {
-                if (boundary.PatternEquals(checkGroup[1..]))
+                if (ArraysEqual(boundary, checkGroup))
                 {
                     fileEndPosition = position;
-                    seekNextBlock();
-                    ReadChar();
-                    ReadChar();
-                    await addElementToForm(current);
-                    current = null;
-                    temp = new StringBuilder();
-                    seeking = false;
                     blockPositionDetector = false;
+                    seekNextBlock();
+                    seeking = false;
+                    addElementToForm(current);
+                    temp = new StringBuilder();
                 }
 
                 ReadChar();
 
-                detectDataStart();
+                parseInputHeaders();
 
                 if (!seeking)
                 {
-                    temp.Append(checkGroup[0]);
+                    temp.Append((char)checkGroup[0]);
                 }
+            }
 
-                if (blockPositionDetector && !seeking && position == positionDetected  && temp.Length > 0)
+            void parseInputHeaders()
+            {
+                if (blockPositionDetector && !seeking && position == nextElementPosition && temp.Length > 0)
                 {
                     string formDataRaw = temp.ToString();
 
-                    formDataRaw = formDataRaw[..^4];
-
-                    var split1 = formDataRaw.Split("\r\n");
+                    var split1 = formDataRaw.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
                     var split = split1[0].Split("; ");
 
                     if (split1.Length > 1)
@@ -206,80 +229,91 @@ namespace AkiraserverV4.Http.Context.Requests
                         temp = new StringBuilder();
                     }
                 }
-
-                void seekNextBlock()
-                {
-                    for (int asd = 0; asd < boundary.Length; asd++)
-                    {
-                        for (int z = 1; z < checkGroup.Length; z++)
-                        {
-                            checkGroup[z - 1] = checkGroup[z];
-                        }
-
-                        position++;
-                        checkGroup[^1] = (char)body.ReadByte();
-
-                        detectDataStart();
-                    }
-                }
-
-                void detectDataStart()
-                {
-                    if (!blockPositionDetector && HttpDelimiter.PatternEquals(checkGroup[(checkGroup.Length - HttpDelimiter.Length)..]))
-                    {
-                        positionDetected = body.Position;
-                        blockPositionDetector = true;
-                    }
-                }
-
-                void ReadChar()
-                {
-                    for (int i = 1; i < checkGroup.Length; i++)
-                    {
-                        checkGroup[i - 1] = checkGroup[i];
-                    }
-
-                    position++;
-
-                    if (body.Position < body.Length)
-                    {
-                        checkGroup[^1] = (char)body.ReadByte();
-                    }
-                }
-
-                
             }
 
-            await addElementToForm(current);
+            void seekNextBlock()
+            {
+                for (int asd = 0; asd < boundary.Length + 1; asd++)
+                {
+                    ReadChar();
+                }
+            }
 
-            async Task addElementToForm(BaseFormInput current)
+            void detectDataStart()
+            {
+                if (!blockPositionDetector && ArrayContainsPatternAtEnd(checkGroup, httpDelimiter))
+                {
+                    nextElementPosition = body.Position;
+                    blockPositionDetector = true;
+                }
+            }
+
+            void ReadChar()
+            {
+                nextChar = checkGroup[0];
+
+                checkGroup.ShiftLeft(1);
+
+                position++;
+
+                if (body.Position < body.Length)
+                {
+                    checkGroup[checkGroup.Length - 1] = (char)body.ReadByte();
+                }
+
+                detectDataStart();
+            }
+
+            void addElementToForm(BaseFormInput current)
             {
                 if (current is FormFile file)
                 {
-                    var bodyLastPosition = body.Position;
-                    var streamLenght = body.Length;
-
-                    var StartPos = positionDetected;
                     // -2 to remove las \r\n para evitar corromper los datos del final del archivo
                     var EndPos = fileEndPosition - 2;
-                    var FileLength = EndPos - StartPos;
+                    var FileLength = EndPos - fileInitPosition;
 
-                    body.Position = StartPos;
-                    body.SetLength(StartPos + FileLength);
-
-                    var ms = new MemoryStream();
-                    await body.CopyToAsync(ms).ConfigureAwait(false);
-                    file.Content = ms;
+                    file.Content = body;
+                    file.StartingPosition = fileInitPosition;
+                    file.Length = FileLength;
                     form.FormFile.Add(file);
-
-                    body.SetLength(body.Length);
-                    body.Position = bodyLastPosition;
                 }
                 else if (current is FormInput input)
                 {
-                    input.Value = temp.ToString()[..^2];
+                    input.Value = temp.ToString()[..^3];
                     form.FormInput.Add(input);
                 }
+
+                current = null;
+            }
+
+            static bool ArraysEqual(int[] a1, int[] a2)
+            {
+                //if (a1.Length != a2.Length)
+                //{
+                    //return false;
+                //}
+                for (int i = 0; i < a1.Length; i++)
+                {
+                    if (a1[i] != a2[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            static bool ArrayContainsPatternAtEnd(int[] a1, int[] pattern)
+            {
+                int patternPosition = 0;
+                for (int i = a1.Length - pattern.Length; i < a1.Length; i++)
+                {
+                    if (a1[i] != pattern[patternPosition])
+                    {
+                        return false;
+                    }
+                    patternPosition++;
+                }
+                return true;
             }
 
             return form;

@@ -33,18 +33,19 @@ namespace SampleServer
 
             using (var fileStream = File.Create(Path.Combine(savePath, file.Filename)))
             {
-                file.Content.Position = 0;
-                file.Content.CopyTo(fileStream);
+                await file.CopyToAsync(fileStream).ConfigureAwait(false);
                 fileStream.Close();
             }
                 
 
-            return new FileResponse()
-            {
-                ContentType = file.ContentType,
-                Content = file.Content,
-                Filename = file.Filename,           
-            };
+            //return new FileResponse()
+            //{
+            //    ContentType = file.ContentType,
+            //    Content = file.Content,
+            //    Filename = file.Filename,           
+            //};
+
+            return null;
         }
 
         [Post("/[method]")]

@@ -16,4 +16,6 @@ You can find a simple example written in [SampleServer](https://github.com/insom
 
 * Map parameters from body forms
 * Authentication Layer
-* Optimize MultipartForm File Handling => Reuse the same steam and use only the part needed
+* Optimize MultipartForm File Handling
+  * Reuse the same steam and use only the part needed (Done)
+  * Still Performs Like Shit
