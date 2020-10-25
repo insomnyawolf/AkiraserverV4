@@ -52,7 +52,7 @@ namespace AkiraserverV4.Http.Context
             }
             else if (bodyContent is null)
             {
-                bodyContent = "null";
+                await SendTextAsync("null").ConfigureAwait(false);
             }
             else
             {
