@@ -14,7 +14,7 @@ namespace AkiraserverV4.Http.Context.Responses
 
         public Response(ResponseSettings settings, HttpStatus status = HttpStatus.Ok, HttpVersion protocolVersion = HttpVersion.HTTP11)
         {
-            Headers = settings.StaticResponseHeaders?.Clone() ?? new Dictionary<string, string>();
+            Headers = settings.StaticResponseHeaders?.DeepClone() ?? new Dictionary<string, string>();
             Status = status;
             ProtocolVersion = protocolVersion;
         }

@@ -62,12 +62,12 @@ namespace AkiraserverV4.Http.Context
         }
 
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-        public sealed class BadRequestAttribute : Attribute { }
+        public sealed class BadRequestHandlerAttribute : BaseEndpointAttribute { }
 
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-        public sealed class NotFoundHandlerAttribute : Attribute { }
+        public sealed class NotFoundHandlerAttribute : BaseEndpointAttribute { }
 
         [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-        internal sealed class InternalServerErrorHandlerAttribute : Attribute { }
+        internal sealed class InternalServerErrorHandlerAttribute : BaseEndpointAttribute { }
     }
 }

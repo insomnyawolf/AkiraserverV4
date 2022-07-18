@@ -1,5 +1,6 @@
 ﻿using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Context.Responses;
+using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Sockets;
@@ -9,18 +10,11 @@ namespace AkiraserverV4.Http.Context
     internal static class ContextBuilder
     {
         private static readonly Type BaseTypeOfContext = typeof(BaseContext);
-        public static BaseMiddleware CreateContext(Type target, Type Middleware, NetworkStream networkStream, Request request, Response response, IServiceProvider serviceProvider)
+        public static BaseMiddleware CreateContext(ExecutedCommand target, Type Middleware, NetworkStream networkStream, Request request, Response response, IServiceProvider serviceProvider)
         {
             object Context;
 
-            if (target is null)
-            {
-                Context = Activator.CreateInstance(BaseTypeOfContext);
-            }
-            else
-            {
-                Context = ActivatorUtilities.CreateInstance(serviceProvider, target);
-            }
+            Context = ActivatorUtilities.CreateInstance(serviceProvider, target.ReflectedDelegate.DeclaringType);
 
             BaseTypeOfContext.GetProperty(nameof(BaseContext.NetworkStream)).SetValue(obj: Context, value: networkStream);
             BaseTypeOfContext.GetProperty(nameof(BaseContext.Request)).SetValue(obj: Context, value: request);

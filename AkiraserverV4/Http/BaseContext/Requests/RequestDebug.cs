@@ -16,19 +16,7 @@ namespace AkiraserverV4.Http.Context.Requests
 #if DEBUG
     public partial class Request
     {
-
-        private ILogger<Request> Logger;
-        public static async Task<Request> BuildRequest(NetworkStream networkStream, RequestSettings settings, ILogger<Request> Logger)
-        {
-            Request req = new Request()
-            {
-                Logger = Logger
-            };
-
-            return await BuildRequest(networkStream, settings, req).ConfigureAwait(false);
-        }
-
-        internal void LogPacket()
+        internal void LogPacket(ILogger<Request> Logger)
         {
             var test = JsonSerializer.Serialize(this, new JsonSerializerOptions() 
             { 

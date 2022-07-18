@@ -15,44 +15,50 @@ namespace SampleServer
         [Post("/[method]")]
         public async Task<object> UrlEncoded()
         {
-            return new JsonResult(await Request.ReadUrlEncodedPayload().ConfigureAwait(false));
+            return new JsonResult(Request.Params);
         }
 
-        [Post("/[method]")]
-        public async Task<FileResponse> MultipartEncoded()
-        {
-            var data = await Request.ReadMultipartPayload().ConfigureAwait(false);
+        //[Post("/[method]")]
+        //public object UrlEncoded()
+        //{
+        //    return new JsonResult(Request.ReadUrlEncodedPayload().Result);
+        //}
 
-            if (data.FormFile.Count == 0)
-            {
-                return null;
-            }
+        //[Post("/[method]")]
+        //public async Task<FileResponse> MultipartEncoded()
+        //{
+        //    var data = await Request.ReadMultipartPayload().ConfigureAwait(false);
 
-            const string savePath = @"M:\Code\C#\AkiraServerV4Other\tests";
+        //    if (data.FormFile.Count == 0)
+        //    {
+        //        return null;
+        //    }
 
-            foreach (var file in data.FormFile)
-            {
-                using (var fileStream = File.Create(Path.Combine(savePath, file.Filename)))
-                {
-                    await file.CopyToAsync(fileStream).ConfigureAwait(false);
-                    fileStream.Close();
-                }
-            }
+        //    const string savePath = @"M:\Code\C#\AkiraServerV4Other\tests";
 
-            var selectedFile = data.FormFile[new Random().Next(0, data.FormFile.Count)];
+        //    foreach (var file in data.FormFile)
+        //    {
+        //        using (var fileStream = File.Create(Path.Combine(savePath, file.Filename)))
+        //        {
+        //            await file.CopyToAsync(fileStream).ConfigureAwait(false);
+        //            fileStream.Close();
+        //        }
+        //    }
 
-            var buffer = new MemoryStream();
-            await selectedFile.CopyToAsync(buffer).ConfigureAwait(false);
+        //    var selectedFile = data.FormFile[new Random().Next(0, data.FormFile.Count)];
 
-            return new FileResponse()
-            {
-                ContentType = selectedFile.ContentType,
-                Content = buffer,
-                Filename = selectedFile.Filename,
-            };
+        //    var buffer = new MemoryStream();
+        //    await selectedFile.CopyToAsync(buffer).ConfigureAwait(false);
 
-            //return null;
-        }
+        //    return new FileResponse()
+        //    {
+        //        ContentType = selectedFile.ContentType,
+        //        Content = buffer,
+        //        Filename = selectedFile.Filename,
+        //    };
+
+        //    //return null;
+        //}
 
         private static Random random = new Random();
         [Post("/[method]")]

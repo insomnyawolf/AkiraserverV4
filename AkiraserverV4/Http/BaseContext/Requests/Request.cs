@@ -30,13 +30,13 @@ namespace AkiraserverV4.Http.Context.Requests
         [System.Text.Json.Serialization.JsonIgnore]
 #endif
         public MemoryStream Body { get; set; }
-        public List<FormInput> UrlQuery { get; private set; }
+        public Dictionary<string, dynamic> Params { get; private set; } = new Dictionary<string, dynamic>();
 
         public static async Task<Request> BuildRequest(NetworkStream networkStream, RequestSettings settings, Request req = null)
         {
-            if(req is null)
+            if (req is null)
             {
-                    req = new Request();
+                req = new Request();
             }
 
             if (networkStream is null)
@@ -99,14 +99,12 @@ namespace AkiraserverV4.Http.Context.Requests
 
             if (query.Length > 1)
             {
-                UrlQuery = DeserializeUrlEncoded(query[1]);
+                DeserializeUrlEncodedQuery(query[1]);
             }
         }
 
-        private static List<FormInput> DeserializeUrlEncoded(string raw)
+        private void DeserializeUrlEncodedQuery(string raw)
         {
-            List<FormInput> result = new List<FormInput>();
-
             raw = HttpUtility.UrlDecode(raw);
 
             string[] KVPairs = raw.Split('&', StringSplitOptions.RemoveEmptyEntries);
@@ -117,15 +115,14 @@ namespace AkiraserverV4.Http.Context.Requests
 
                 if (currentKV.Length == 2)
                 {
-                    result.Add(new FormInput()
-                    {
-                        Name = currentKV[0],
-                        Value = currentKV[1]
-                    });
+                    Params.Add(currentKV[0], currentKV[1]);
                 }
             }
+        }
 
-            return result;
+        public async Task DeserializeUrlEncodedBody()
+        {
+            DeserializeUrlEncodedQuery(await ReadStringPayloadAsync().ConfigureAwait(false));
         }
 
         private static async Task<RequestData> ParseFirstPacket(byte[] stream, int maxPosition)

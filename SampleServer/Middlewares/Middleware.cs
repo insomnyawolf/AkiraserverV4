@@ -18,22 +18,22 @@ namespace SampleServer.Middlewares
             return await InvokeNamedParams(Context, executedCommand).ConfigureAwait(false);
         }
 
-        public override async Task<object> BadRequest(Exception exception)
-        {
-            Context.Response.Status = HttpStatus.BadRequest;
-            return exception;
-        }
+        //public override async Task<object> BadRequest(Exception exception)
+        //{
+        //    Context.Response.Status = HttpStatus.BadRequest;
+        //    return exception;
+        //}
 
-        public override async Task<object> NotFound(Request request)
-        {
-            Context.Response.Status = HttpStatus.NotFound;
-            return $"404 NotFound => {request.Header.Method} {request.Header.Path}";
-        }
+        //public override async Task<object> NotFound(Request request)
+        //{
+        //    Context.Response.Status = HttpStatus.NotFound;
+        //    return $"404 NotFound => {request.Header.Method} {request.Header.Path}";
+        //}
 
-        public override async Task<object> InternalServerError(Exception exception)
-        {
-            Context.Response.Status = HttpStatus.InternalServerError;
-            return exception;
-        }
+        //public override async Task<object> InternalServerError(Exception exception)
+        //{
+        //    Context.Response.Status = HttpStatus.InternalServerError;
+        //    return exception;
+        //}
     }
 }

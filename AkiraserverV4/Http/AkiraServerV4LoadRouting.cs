@@ -37,25 +37,55 @@ namespace AkiraserverV4.Http
                     {
                         MethodInfo currentMethod = methods[methodIndex];
 
-                        IEnumerable<Attribute> Attributes = currentMethod.GetCustomAttributes();
+                        var Attributes = currentMethod.GetCustomAttributes().ToArray();
 
-                        foreach (Attribute currentAttribute in Attributes)
+                        for (int index = 0; index < Attributes.Length; index++)
                         {
+                            var currentAttribute = Attributes[index];
+
                             if (currentAttribute is BaseEndpointAttribute endpointAttribute)
                             {
-                                string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveAtEnd("Context"));
+                                string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveSuffix("Context"));
+                                if (string.IsNullOrEmpty(controllerPath))
+                                {
+                                    controllerPath = '/' + currentClass.Name.RemoveSuffix("Context");
+                                }
+
                                 string methodPath = endpointAttribute.Path.Replace("[method]", currentMethod.Name);
+                                if (string.IsNullOrEmpty(methodPath))
+                                {
+                                    methodPath = '/' + currentMethod.Name;
+                                }
                                 string path = controllerPath + methodPath;
+
+#warning no more than one not found/badrequest/exception methods
                                 endpoints.Add(new Endpoint()
                                 {
-                                    ClassExecuted = currentClass,
                                     ParameterInfo = currentMethod.GetParameters().ToArray(),
-                                    MethodExecuted = currentMethod.CreateReflectedDelegate(),
+                                    ReflectedDelegate = currentMethod.CreateReflectedDelegate(),
                                     Method = endpointAttribute.Method,
                                     Path = path,
                                     Priority = CalculatePriority(path),
-                                    ReturnIsGenericType = currentMethod.ReturnType.IsGenericType
+                                    Attributes = Attributes,
+                                    SpecialEndpoint = getTypeOfSpecialEndpoint(),
                                 });
+
+                                SpecialEndpoint getTypeOfSpecialEndpoint()
+                                {
+                                    if (currentAttribute is BadRequestHandlerAttribute)
+                                    {
+                                        return SpecialEndpoint.BadRequest;
+                                    }
+                                    if (currentAttribute is NotFoundHandlerAttribute)
+                                    {
+                                        return SpecialEndpoint.NotFound;
+                                    }
+                                    if (currentAttribute is InternalServerErrorHandlerAttribute)
+                                    {
+                                        return SpecialEndpoint.InternalServerError;
+                                    }
+                                    return SpecialEndpoint.No;
+                                }
                             }
                         }
                     }
@@ -86,7 +116,9 @@ namespace AkiraserverV4.Http
 
             Endpoints = endpoints.ToArray();
 
-            Logger.LogInformation(LogRoutingInfo());
+            var routungInfo = LogRoutingInfo();
+
+            Logger.LogInformation(routungInfo);
         }
 
         private class EndpointCount
@@ -133,7 +165,7 @@ namespace AkiraserverV4.Http
                 if (item.Count > 0)
                 {
                     // $"* Route: '{item.Method} => {item.Path} ' appears '{item.Count + 1}' times .\n"
-                    error.Append("* Route: '").Append(item.Method.Padding(7, position: PaddingPosition.Left)).Append(" => ").Append(item.Path).Append(" ' appears '").Append(item.Count + 1).Append("' times .\n");
+                    error.Append("* Route: '").Append(item.Method.ToString().Padding(7, position: PaddingPosition.Left)).Append(" => ").Append(item.Path).Append(" ' appears '").Append(item.Count + 1).Append("' times .\n");
                 }
             }
 
@@ -150,7 +182,7 @@ namespace AkiraserverV4.Http
             sb.Append("Loaded The following Endpoints:\n");
             foreach (Endpoint endpoint in Endpoints)
             {
-                sb.Append("\t\t* Route: '").Append(endpoint.Method.Padding(7, position: PaddingPosition.Left)).Append(" => ").Append(endpoint.Path).Append("'.\n");
+                sb.Append("\t\t* Route: '").Append(endpoint.Method.ToString().Padding(7, position: PaddingPosition.Left)).Append(" => ").Append(endpoint.Path).Append("'.\n");
             }
 
             return sb.ToString();

@@ -4,6 +4,7 @@ using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
+using Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,7 +26,7 @@ namespace AkiraserverV4.Http
         private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
         private readonly GeneralSettings Settings;
-        private Type Middleware { get; set; }
+        private Type MiddlewareType { get; set; }
 
         public AkiraServerV4(IServiceProvider serviceProvider)
         {
@@ -34,6 +35,8 @@ namespace AkiraserverV4.Http
             Logger = ServiceProvider.GetRequiredService<ILoggerFactory>()?.CreateLogger<AkiraServerV4>();
 
             Settings = serviceProvider.GetRequiredService<IConfiguration>().GetSection("Server").Get<GeneralSettings>();
+
+            LoadRouting(typeof(BaseContext).Assembly);
 
             SetMiddleware<BaseMiddleware>();
 
@@ -59,6 +62,8 @@ namespace AkiraserverV4.Http
 
         public async Task StartListening()
         {
+
+
             if (Endpoints is null)
             {
                 Logger.LogError("There are no endpoints loaded".ToErrorString(this));
@@ -100,7 +105,7 @@ namespace AkiraserverV4.Http
 
         public void SetMiddleware<T>() where T : BaseMiddleware
         {
-            Middleware = typeof(T);
+            MiddlewareType = typeof(T);
         }
 
         public async Task RequestProcessing()
@@ -132,17 +137,14 @@ namespace AkiraserverV4.Http
 
                     // Stream Checks =================================================================
 
-                    ExecutedCommand executedCommand = null;
                     Request request = null;
                     Exception exception = null;
-
-                    
 
                     try
                     {
 #if DEBUG
-                        request = await Request.BuildRequest(netStream, Settings.RequestSettings, ServiceProvider.GetRequiredService<ILogger<Request>>()).ConfigureAwait(false);
-                        //request.LogPacket();
+                        request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
+                        request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
 #else
                         request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
 #endif
@@ -152,47 +154,55 @@ namespace AkiraserverV4.Http
                         exception = MalformedRequestException;
                     }
 
-                    if (request is not null && RequestedEndpoint(request) is ExecutedCommand executedCommand1)
-                    {
-                        executedCommand = executedCommand1;
-                    }
+                    ExecutedCommand executedCommand = null;
 
                     var response = new Response(Settings.ResponseSettings);
 
-                    var middleware = ContextBuilder.CreateContext(executedCommand?.ClassExecuted, Middleware, netStream, request, response, ServiceProvider);
-
-                    object bodyContent;
-                    bool isReturnTypeVoid = false;
+                    if (request is null)
+                    {
+#warning rework the request creation so it returns the error and as out the request
+                        return;
+                    }
 
                     if (exception is not null)
                     {
-                        bodyContent = await middleware.BadRequest(exception).ConfigureAwait(false);
-                    }
-                    else if (executedCommand is null)
-                    {
-                        bodyContent = await middleware.NotFound(request).ConfigureAwait(false);
-                        
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var temp = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
-                            isReturnTypeVoid = temp.IsReturnTypeVoid;
-                            bodyContent = temp.ReturnValue;
-                        }
-                        
-                        catch (IOException)
-                        {
-                            throw;
-                        }
-                        catch (Exception ex)
-                        {
-                            bodyContent = await middleware.InternalServerError(ex).ConfigureAwait(false);
-                        }
+                        executedCommand = GetEndpoint(SpecialEndpoint.BadRequest);
+                        request.Params.Add(nameof(Exception), exception);
                     }
 
-                    await middleware.Context.WriteBodyAsync(isReturnTypeVoid, bodyContent).ConfigureAwait(false);
+                    if (executedCommand is null)
+                    {
+                        executedCommand = GetEndpoint(request);
+                    }
+
+                    if (executedCommand is null)
+                    {
+                        executedCommand = GetEndpoint(SpecialEndpoint.NotFound);
+                        request.Params.Add(nameof(Request), request);
+                    }
+
+                    var middleware = ContextBuilder.CreateContext(executedCommand, MiddlewareType, netStream, request, response, ServiceProvider);
+
+                    try
+                    {
+                        var temp = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+
+                        await middleware.Context.WriteBodyAsync(temp).ConfigureAwait(false);
+                    }
+                    catch (IOException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        executedCommand = GetEndpoint(SpecialEndpoint.InternalServerError);
+
+                        request.Params.Add(nameof(Exception), ex);
+
+                        var temp = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+
+                        await middleware.Context.WriteBodyAsync(temp).ConfigureAwait(false);
+                    }
                 }
             }
         }

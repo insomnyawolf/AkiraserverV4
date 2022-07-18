@@ -6,7 +6,6 @@ using Extensions;
 using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.Context
@@ -21,9 +20,9 @@ namespace AkiraserverV4.Http.Context
 
         public BaseContext() { }
 
-        internal async Task WriteBodyAsync(bool isReturnTypeVoid, object bodyContent)
+        internal async Task WriteBodyAsync(ExecutionStatus executionStatus)
         {
-            if (isReturnTypeVoid)
+            if (executionStatus.ReturnType == ReturnType.Void)
             {
                 if (Response.Status == HttpStatus.Ok)
                 {
@@ -32,31 +31,31 @@ namespace AkiraserverV4.Http.Context
                 await WriteHeadersAsync().ConfigureAwait(false);
             }
 
-            if (bodyContent is ResponseResult responseResult)
+            if (executionStatus.Value is ResponseResult responseResult)
             {
                 await SendResponseResultAsync(responseResult).ConfigureAwait(false);
             }
-            else if (bodyContent is BinaryResponseResult binaryResponse)
+            else if (executionStatus.Value is BinaryResponseResult binaryResponse)
             {
                 await binaryResponse.CustomResponse(this).ConfigureAwait(false);
                 await WriteDataAsync(binaryResponse.Content).ConfigureAwait(false);
 
             }
-            else if (bodyContent is MemoryStream stream)
+            else if (executionStatus.Value is MemoryStream stream)
             {
                 await WriteDataAsync(stream).ConfigureAwait(false);
             }
-            else if (bodyContent is string str)
+            else if (executionStatus.Value is string str)
             {
                 await SendTextAsync(str).ConfigureAwait(false);
             }
-            else if (bodyContent is null)
+            else if (executionStatus.Value is null)
             {
                 await SendTextAsync("null").ConfigureAwait(false);
             }
             else
             {
-                await SendTextAsync(bodyContent.ToString()).ConfigureAwait(false);
+                await SendTextAsync(executionStatus.Value.ToString()).ConfigureAwait(false);
             }
         }
 
