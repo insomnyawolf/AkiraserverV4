@@ -10,13 +10,12 @@ namespace AkiraserverV4.Http.Context
     internal static class ContextBuilder
     {
         private static readonly Type BaseTypeOfContext = typeof(BaseContext);
-        public static BaseMiddleware CreateContext(ExecutedCommand target, Type Middleware, NetworkStream networkStream, Request request, Response response, IServiceProvider serviceProvider)
+        public static BaseMiddleware CreateContext(ExecutedCommand target, Type Middleware, Request request, Response response, IServiceProvider serviceProvider)
         {
             object Context;
 
             Context = ActivatorUtilities.CreateInstance(serviceProvider, target.ReflectedDelegate.DeclaringType);
 
-            BaseTypeOfContext.GetProperty(nameof(BaseContext.NetworkStream)).SetValue(obj: Context, value: networkStream);
             BaseTypeOfContext.GetProperty(nameof(BaseContext.Request)).SetValue(obj: Context, value: request);
             BaseTypeOfContext.GetProperty(nameof(BaseContext.Response)).SetValue(obj: Context, value: response);
 

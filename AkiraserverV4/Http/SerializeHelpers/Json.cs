@@ -1,23 +1,25 @@
 ﻿using System;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Helper;
 
 namespace AkiraserverV4.Http.SerializeHelpers
 {
     public class JsonResult : ResponseResult
     {
-        public JsonResult(object obj) : base(obj)
+        public override ContentType ContentType { get; set; } = ContentType.JSON;
+        public dynamic Value { get; set; }
+        public JsonResult(dynamic Value)
         {
-            ContentType = ContentType.JSON;
+            this.Value = Value;
         }
 
-        public override async Task<Stream> Serialize()
+        public override async Task SerializeToNetworkStream(Response Response)
         {
-            var ms = new MemoryStream();
-            await JsonSerializer.SerializeAsync(ms, Content).ConfigureAwait(false);
-            return ms;
+            await JsonSerializer.SerializeAsync(Response.NetworkStream, Value).ConfigureAwait(false);
         }
     }
 
@@ -28,6 +30,11 @@ namespace AkiraserverV4.Http.SerializeHelpers
         public static object DeSerialize(Type type, string data)
         {
             return JsonSerializer.Deserialize(data, type);
+        }
+
+        public static T DeSerialize<T>(string data)
+        {
+            return JsonSerializer.Deserialize<T>(data);
         }
     }
 }

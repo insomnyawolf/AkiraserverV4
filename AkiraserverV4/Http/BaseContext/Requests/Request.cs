@@ -25,37 +25,40 @@ namespace AkiraserverV4.Http.Context.Requests
             return arr;
         }
 
-        public Header Header { get; set; }
+        public List<string> ParseErrors { get; } = new List<string>();
+
+        public RequestHeaders RequestHeaders { get; set; }
 #if DEBUG
         [System.Text.Json.Serialization.JsonIgnore]
 #endif
         public MemoryStream Body { get; set; }
         public Dictionary<string, dynamic> Params { get; private set; } = new Dictionary<string, dynamic>();
 
-        public static async Task<Request> BuildRequest(NetworkStream networkStream, RequestSettings settings, Request req = null)
+        public static async Task<Request> TryParseRequest(NetworkStream networkStream, RequestSettings settings)
         {
-            if (req is null)
-            {
-                req = new Request();
-            }
-
             if (networkStream is null)
             {
                 throw new ArgumentNullException(nameof(networkStream));
             }
 
+            var request = new Request();
 
             byte[] currentBuffer = new byte[settings.ReadPacketSize];
 
             int dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer, settings.ReadPacketSize, settings.ReciveTimeout).ConfigureAwait(false);
 
-            var temp = await ParseFirstPacket(currentBuffer, dataRead).ConfigureAwait(false);
+            await request.ParseFirstPacket(currentBuffer, dataRead).ConfigureAwait(false);
+
+            if (request.RequestHeaders is null)
+            {
+                return request;
+            }
 
             long? bodySize = null;
 
-            if (temp.Headers.RequestHeaders.ContainsKey(Context.HeaderNames.ContentLength))
+            if (request.RequestHeaders.ContainsKey(HeaderNames.ContentLength))
             {
-                bodySize = long.Parse(temp.Headers.RequestHeaders[Context.HeaderNames.ContentLength]);
+                bodySize = long.Parse(request.RequestHeaders[HeaderNames.ContentLength]);
             }
 
             int remeaning = settings.ReadPacketSize;
@@ -64,7 +67,7 @@ namespace AkiraserverV4.Http.Context.Requests
             {
                 if (bodySize.HasValue)
                 {
-                    remeaning = (int)(bodySize.Value - temp.Body.Position);
+                    remeaning = (int)(bodySize.Value - request.Body.Position);
 
                     if (remeaning > settings.ReadPacketSize)
                     {
@@ -76,25 +79,22 @@ namespace AkiraserverV4.Http.Context.Requests
 
                 if (dataRead > 0)
                 {
-                    await temp.Body.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
+                    await request.Body.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
                 }
             }
 
-            req.Header = temp.Headers;
-            req.Body = temp.Body;
+            request.ParseUrlQuery();
 
-            req.ParseUrlQuery();
-
-            return req;
+            return request;
         }
 
         private void ParseUrlQuery()
         {
-            string[] query = Header.Path.Split('?', StringSplitOptions.RemoveEmptyEntries);
+            string[] query = RequestHeaders.Path.Split('?', StringSplitOptions.RemoveEmptyEntries);
 
             if (query.Length > 0)
             {
-                Header.Path = query[0];
+                RequestHeaders.Path = query[0];
             }
 
             if (query.Length > 1)
@@ -105,8 +105,6 @@ namespace AkiraserverV4.Http.Context.Requests
 
         private void DeserializeUrlEncodedQuery(string raw)
         {
-            raw = HttpUtility.UrlDecode(raw);
-
             string[] KVPairs = raw.Split('&', StringSplitOptions.RemoveEmptyEntries);
 
             for (int index = 0; index < KVPairs.Length; index++)
@@ -115,7 +113,7 @@ namespace AkiraserverV4.Http.Context.Requests
 
                 if (currentKV.Length == 2)
                 {
-                    Params.Add(currentKV[0], currentKV[1]);
+                    Params.Add(HttpUtility.UrlDecode(currentKV[0]), HttpUtility.UrlDecode(currentKV[1]));
                 }
             }
         }
@@ -125,10 +123,8 @@ namespace AkiraserverV4.Http.Context.Requests
             DeserializeUrlEncodedQuery(await ReadStringPayloadAsync().ConfigureAwait(false));
         }
 
-        private static async Task<RequestData> ParseFirstPacket(byte[] stream, int maxPosition)
+        private async Task ParseFirstPacket(byte[] stream, int maxPosition)
         {
-
-
             StringBuilder headersRaw = new StringBuilder();
 
             char[] checkGroup = new char[HttpDelimiter.Length];
@@ -159,22 +155,23 @@ namespace AkiraserverV4.Http.Context.Requests
 
             if (string.IsNullOrEmpty(data))
             {
-                throw new MalformedRequestException();
+                ParseErrors.Add("Invalid request, no headers were provided.");
+                return;
             }
 
             string[] firstLine = data.Split(' ');
 
             if (firstLine.Length != 3)
             {
-                throw new MalformedRequestException();
+                ParseErrors.Add("First header where verb, path and http version should be is invalid.");
+                return;
             }
 
-            var headers = new Header()
+            RequestHeaders = new RequestHeaders()
             {
                 Method = HttpMethodConvert.FromString(firstLine[0]),
                 Path = firstLine[1],
                 Version = HttpVersionConvert.FromString(firstLine[2]),
-                RequestHeaders = new Dictionary<string, string>()
             };
 
             string currentHeader;
@@ -183,25 +180,18 @@ namespace AkiraserverV4.Http.Context.Requests
                 string[] header = currentHeader.Split(": ");
                 if (header.Length != 2)
                 {
-                    throw new MalformedRequestException();
+                    ParseErrors.Add($"The header: '{currentHeader}' contain more than 2 parts.");
+                    return;
                 }
-                headers.RequestHeaders.Add(header[0], header[1]);
+                RequestHeaders.Add(header[0], header[1]);
             }
 
-            MemoryStream body = new MemoryStream();
+            Body = new MemoryStream();
 
             if (position < maxPosition)
             {
-                await body.WriteAsync(stream, position, maxPosition - position).ConfigureAwait(false);
+                await Body.WriteAsync(stream, position, maxPosition - position).ConfigureAwait(false);
             }
-
-            var requestData = new RequestData()
-            {
-                Body = body,
-                Headers = headers
-            };
-
-            return requestData;
         }
     }
 }

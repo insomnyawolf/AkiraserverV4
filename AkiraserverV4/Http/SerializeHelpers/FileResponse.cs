@@ -1,30 +1,31 @@
-﻿using AkiraserverV4.Http.Context;
-using AkiraserverV4.Http.Context.Responses;
+﻿using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Helper;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.SerializeHelpers
 {
-    public class FileResponse : BinaryResponseResult
+    public class FileResponse : ResponseResult
     {
-        public ContentType ContentType { get; set; }
+        // maybe create a mime guesser?
+        public override ContentType ContentType { get; set; } = ContentType.Binary; 
         public string Filename { get; set; }
+        public FileStream FileStream { get; set; }
 
-        public FileResponse(MemoryStream obj)
+        public FileResponse(FileStream FileStream)
         {
-            Content = obj;
+            this.FileStream = FileStream;
+            this.Filename = Path.GetFileName(FileStream.Name); 
         }
 
-        public FileResponse()
+        public override async Task SerializeToNetworkStream(Response Response)
         {
-        }
+            Response.AddContentType(ContentType);
+            Response.AddContentLenght((int)FileStream.Length);
+            Response.AddContentDisposition($"attachment; {Filename ?? ""}");
 
-        public override async Task CustomResponse(BaseContext ctx)
-        {
-            ctx.Response.AddContentDisposition($"attachment; {Filename ?? ""}");
-            ctx.Response.AddContentType(ContentType);
-            ctx.Response.AddContentLenght((int)Content.Length);
+            FileStream.Position = 0;
+            await FileStream.CopyToAsync(Response.NetworkStream);
         }
     }
 }

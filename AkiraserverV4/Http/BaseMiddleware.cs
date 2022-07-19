@@ -1,10 +1,8 @@
 ﻿using AkiraserverV4.Http.Context;
 using AkiraserverV4.Http.Context.Requests;
-using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Model;
 using AkiraserverV4.Http.SerializeHelpers;
 using System;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Extensions;
@@ -16,16 +14,16 @@ namespace AkiraserverV4.Http
     {
         public BaseContext Context { get; set; }
 
-        public virtual async Task<ExecutionStatus> ActionExecuting(ExecutedCommand executedCommand)
+        public virtual Task<ExecutionStatus> ActionExecuting(ExecutedCommand executedCommand)
         {
-            return await InvokeNamedParams(Context, executedCommand).ConfigureAwait(false);
+            return InvokeNamedParams(Context, executedCommand);
         }
 
         public static async Task<ExecutionStatus> InvokeNamedParams(BaseContext context, ExecutedCommand executedCommand)
         {
-            var parameters = await MapParameters(executedCommand, context.Request).ConfigureAwait(false);
+            var parameters = await MapParameters(executedCommand, context.Request);
 
-            return await Invoke(executedCommand: executedCommand, context: context, parameters: parameters).ConfigureAwait(false);
+            return await Invoke(executedCommand: executedCommand, context: context, parameters: parameters);
         }
 
         public static async Task<object[]> MapParameters(ExecutedCommand executedCommand, Request request)
@@ -37,9 +35,9 @@ namespace AkiraserverV4.Http
                 ParameterInfo currentParam = executedCommand.ParameterInfo[parameterIndex];
                 // If object type should try to get the value of the body (json/xml/form) else map query parameters into it
 
-                if (request.Header.RequestHeaders.ContainsKey(HeaderNames.ContentType))
+                if (request.RequestHeaders?.ContainsKey(HeaderNames.ContentType) == true)
                 {
-                    var contentTypeHeader = request.Header.RequestHeaders[HeaderNames.ContentType];
+                    var contentTypeHeader = request.RequestHeaders[HeaderNames.ContentType];
 
                     if (contentTypeHeader.StartsWith(JsonDeserialize.ContentType))
                     {

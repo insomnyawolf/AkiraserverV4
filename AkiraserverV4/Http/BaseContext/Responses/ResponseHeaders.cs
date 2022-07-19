@@ -2,21 +2,23 @@
 using AkiraserverV4.Http.Helper;
 using System.Collections.Generic;
 using System.Text;
+using System.Net.Sockets;
+using System.IO;
 
 namespace AkiraserverV4.Http.Context.Responses
 {
     public partial class Response
     {
-        public HttpVersion ProtocolVersion { get; set; }
-        public HttpStatus Status { get; set; }
+        public HttpVersion ProtocolVersion { get; set; } = HttpVersion.HTTP11;
+        public HttpStatus Status { get; set; } = HttpStatus.Ok;
         public Dictionary<string, string> Headers { get; set; }
         private const string HeaderSeparator = "\r\n";
 
-        public Response(ResponseSettings settings, HttpStatus status = HttpStatus.Ok, HttpVersion protocolVersion = HttpVersion.HTTP11)
+        public Response(ResponseSettings settings, NetworkStream NetworkStream)
         {
+            this.NetworkStream = NetworkStream;
+            this.StreamWriter = new StreamWriter(NetworkStream, Encoding.UTF8);
             Headers = settings.StaticResponseHeaders?.DeepClone() ?? new Dictionary<string, string>();
-            Status = status;
-            ProtocolVersion = protocolVersion;
         }
 
         public string ProcessHeaders()

@@ -51,7 +51,7 @@ namespace AkiraserverV4.Http
             TcpListener.Server.ReceiveTimeout = Settings.RequestSettings.ReciveTimeout;
             TcpListener.Server.SendTimeout = Settings.ResponseSettings.SendTimeout;
             TcpListener.Server.Ttl = Settings.Ttl;
-            TcpListener.Server.UseOnlyOverlappedIO = Settings.UseOnlyOverlappedIO;
+            //TcpListener.Server.UseOnlyOverlappedIO = Settings.UseOnlyOverlappedIO;
             //TcpListener.Server.Blocking = false;
         }
 
@@ -137,57 +137,43 @@ namespace AkiraserverV4.Http
 
                     // Stream Checks =================================================================
 
-                    Request request = null;
-                    Exception exception = null;
 
-                    try
-                    {
+                    var request = await Request.TryParseRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
+
 #if DEBUG
-                        request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
-                        request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
-#else
-                        request = await Request.BuildRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
+                    request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
 #endif
-                    }
-                    catch (MalformedRequestException MalformedRequestException)
-                    {
-                        exception = MalformedRequestException;
-                    }
 
                     ExecutedCommand executedCommand = null;
 
-                    var response = new Response(Settings.ResponseSettings);
+                    var response = new Response(Settings.ResponseSettings, netStream);
 
-                    if (request is null)
-                    {
-#warning rework the request creation so it returns the error and as out the request
-                        return;
-                    }
-
-                    if (exception is not null)
+                    if (request.ParseErrors.Count > 0)
                     {
                         executedCommand = GetEndpoint(SpecialEndpoint.BadRequest);
-                        request.Params.Add(nameof(Exception), exception);
+                        request.Params.Add("ParseErrors", request.ParseErrors);
                     }
 
                     if (executedCommand is null)
                     {
+                        // parse went right, here we find what we should do
                         executedCommand = GetEndpoint(request);
                     }
 
                     if (executedCommand is null)
                     {
+                        // we didn't find what we should do
                         executedCommand = GetEndpoint(SpecialEndpoint.NotFound);
                         request.Params.Add(nameof(Request), request);
                     }
 
-                    var middleware = ContextBuilder.CreateContext(executedCommand, MiddlewareType, netStream, request, response, ServiceProvider);
+                    var middleware = ContextBuilder.CreateContext(executedCommand, MiddlewareType, request, response, ServiceProvider);
 
                     try
                     {
-                        var temp = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+                        var temp = await middleware.ActionExecuting(executedCommand);
 
-                        await middleware.Context.WriteBodyAsync(temp).ConfigureAwait(false);
+                        await response.WriteBodyAsync(temp);
                     }
                     catch (IOException)
                     {
@@ -199,9 +185,9 @@ namespace AkiraserverV4.Http
 
                         request.Params.Add(nameof(Exception), ex);
 
-                        var temp = await middleware.ActionExecuting(executedCommand).ConfigureAwait(false);
+                        var temp = await middleware.ActionExecuting(executedCommand);
 
-                        await middleware.Context.WriteBodyAsync(temp).ConfigureAwait(false);
+                        await response.WriteBodyAsync(temp);
                     }
                 }
             }
