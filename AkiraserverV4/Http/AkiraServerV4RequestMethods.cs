@@ -1,4 +1,4 @@
-﻿    using AkiraserverV4.Http.Context.Requests;
+﻿using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Model;
 using System;
 
@@ -17,7 +17,7 @@ namespace AkiraserverV4.Http
             {
                 Endpoint currentEndpoint = Endpoints[index];
 
-                if (currentEndpoint.Method == request.RequestHeaders.Method && request.RequestHeaders.Path.Equals(currentEndpoint.Path, StringComparison.OrdinalIgnoreCase))
+                if (currentEndpoint.Method == request.HttpHeaders.Method && request.HttpHeaders.Path.Equals(currentEndpoint.Path, StringComparison.OrdinalIgnoreCase))
                 {
                     return currentEndpoint;
                 }

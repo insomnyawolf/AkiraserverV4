@@ -35,9 +35,9 @@ namespace AkiraserverV4.Http
                 ParameterInfo currentParam = executedCommand.ParameterInfo[parameterIndex];
                 // If object type should try to get the value of the body (json/xml/form) else map query parameters into it
 
-                if (request.RequestHeaders?.ContainsKey(HeaderNames.ContentType) == true)
+                if (request.HttpHeaders?.ContainsKey(HeaderNames.ContentType) == true)
                 {
-                    var contentTypeHeader = request.RequestHeaders[HeaderNames.ContentType];
+                    var contentTypeHeader = request.HttpHeaders[HeaderNames.ContentType];
 
                     if (contentTypeHeader.StartsWith(JsonDeserialize.ContentType))
                     {

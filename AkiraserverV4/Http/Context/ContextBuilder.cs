@@ -3,7 +3,6 @@ using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Model;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Net.Sockets;
 
 namespace AkiraserverV4.Http.Context
 {

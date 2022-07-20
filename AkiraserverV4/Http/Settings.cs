@@ -1,15 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using AkiraserverV4.Http.Context;
 
 namespace AkiraserverV4.Http
 {
     public class GeneralSettings
     {
-        public int Port { get; set; }
-        public bool ExclusiveAddressUse { get; set; }
-        public bool UseOnlyOverlappedIO { get; set; }
-        public short Ttl { get; set; }
-        public RequestSettings RequestSettings { get; set; }
-        public ResponseSettings ResponseSettings { get; set; }
+        public int Port { get; set; } = 80;
+        public bool ExclusiveAddressUse { get; set; } = true;
+        public short Ttl { get; set; } = 128;
+        public int BufferSize { get; set; } = 8192;
+        public RequestSettings RequestSettings { get; set; } = new RequestSettings();
+        public ResponseSettings ResponseSettings { get; set; } = new ResponseSettings();
     }
 
     public class RequestSettings
@@ -21,7 +21,6 @@ namespace AkiraserverV4.Http
     public class ResponseSettings
     {
         public int SendTimeout { get; set; }
-#warning Buscar un nombre mejor
-        public Dictionary<string,string> StaticResponseHeaders { get; set; }
+        public HttpResponseHeaders StaticHttpResponseHeaders { get; set; }
     }
 }

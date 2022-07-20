@@ -1,7 +1,7 @@
 ﻿using AkiraserverV4.Http.Context.Requests;
+using Extensions;
 using System;
 using System.Reflection;
-using static Extensions.DelegateFactory;
 
 namespace AkiraserverV4.Http.Model
 {

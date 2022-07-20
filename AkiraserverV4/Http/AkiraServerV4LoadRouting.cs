@@ -23,7 +23,7 @@ namespace AkiraserverV4.Http
                 return;
             }
 
-            List<Endpoint> endpoints = new List<Endpoint>();
+            var endpoints = new List<Endpoint>();
 
             Type[] classes = assembly.GetTypes();
             for (int classIndex = 0; classIndex < classes.Length; classIndex++)
@@ -130,7 +130,7 @@ namespace AkiraserverV4.Http
 
         private static void ValidateRouting(ref List<Endpoint> endpoints)
         {
-            List<EndpointCount> duplicatedCheck = new List<EndpointCount>();
+            var duplicatedCheck = new List<EndpointCount>();
 
             for (int index = 0; index < endpoints.Count; index++)
             {
@@ -158,7 +158,7 @@ namespace AkiraserverV4.Http
                 }
             }
 
-            StringBuilder error = new StringBuilder();
+            var error = new StringBuilder();
             for (int i = 0; i < duplicatedCheck.Count; i++)
             {
                 EndpointCount item = duplicatedCheck[i];
@@ -178,7 +178,7 @@ namespace AkiraserverV4.Http
 
         private string LogRoutingInfo()
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             sb.Append("Loaded The following Endpoints:\n");
             foreach (Endpoint endpoint in Endpoints)
             {

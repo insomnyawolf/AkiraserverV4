@@ -1,19 +1,10 @@
-﻿using AkiraserverV4.Http.Exceptions;
-using AkiraserverV4.Http.Helper;
+﻿#if DEBUG
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Sockets;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using System.Web;
 
 namespace AkiraserverV4.Http.Context.Requests
 {
-#if DEBUG
     public partial class Request
     {
         internal void LogPacket(ILogger<Request> Logger)
@@ -29,5 +20,5 @@ namespace AkiraserverV4.Http.Context.Requests
             Logger.LogInformation(test);
         }
     } 
-#endif
 }
+#endif

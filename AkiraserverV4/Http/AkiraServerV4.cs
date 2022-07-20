@@ -1,10 +1,8 @@
 ﻿using AkiraserverV4.Http.Context;
 using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Context.Responses;
-using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Extensions;
 using AkiraserverV4.Http.Model;
-using Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,7 +23,7 @@ namespace AkiraserverV4.Http
 
         private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
-        private readonly GeneralSettings Settings;
+        private readonly GeneralSettings GeneralSettings;
         private Type MiddlewareType { get; set; }
 
         public AkiraServerV4(IServiceProvider serviceProvider)
@@ -34,23 +32,23 @@ namespace AkiraserverV4.Http
 
             Logger = ServiceProvider.GetRequiredService<ILoggerFactory>()?.CreateLogger<AkiraServerV4>();
 
-            Settings = serviceProvider.GetRequiredService<IConfiguration>().GetSection("Server").Get<GeneralSettings>();
+            GeneralSettings = serviceProvider.GetRequiredService<IConfiguration>().GetSection("Server").Get<GeneralSettings>();
 
             LoadRouting(typeof(BaseContext).Assembly);
 
             SetMiddleware<BaseMiddleware>();
 
-            TcpListener = new TcpListener(localaddr: IPAddress.Any, port: Settings.Port);
+            TcpListener = new TcpListener(localaddr: IPAddress.Any, port: GeneralSettings.Port);
 
             ReloadServerConfig();
         }
 
         public void ReloadServerConfig()
         {
-            TcpListener.Server.ExclusiveAddressUse = Settings.ExclusiveAddressUse;
-            TcpListener.Server.ReceiveTimeout = Settings.RequestSettings.ReciveTimeout;
-            TcpListener.Server.SendTimeout = Settings.ResponseSettings.SendTimeout;
-            TcpListener.Server.Ttl = Settings.Ttl;
+            TcpListener.Server.ExclusiveAddressUse = GeneralSettings.ExclusiveAddressUse;
+            TcpListener.Server.ReceiveTimeout = GeneralSettings.RequestSettings.ReciveTimeout;
+            TcpListener.Server.SendTimeout = GeneralSettings.ResponseSettings.SendTimeout;
+            TcpListener.Server.Ttl = GeneralSettings.Ttl;
             //TcpListener.Server.UseOnlyOverlappedIO = Settings.UseOnlyOverlappedIO;
             //TcpListener.Server.Blocking = false;
         }
@@ -85,7 +83,7 @@ namespace AkiraserverV4.Http
             {
                 try
                 {
-                    await RequestProcessing().ConfigureAwait(false);
+                    await ServeNext().ConfigureAwait(false);
                 }
                 catch (Exception e) when (e is SocketException || e is IOException)
                 {
@@ -108,7 +106,7 @@ namespace AkiraserverV4.Http
             MiddlewareType = typeof(T);
         }
 
-        public async Task RequestProcessing()
+        public async Task ServeNext()
         {
             //Listener.AcceptSocketAsync
             using (TcpClient client = await TcpListener.AcceptTcpClientAsync().ConfigureAwait(false))
@@ -137,59 +135,65 @@ namespace AkiraserverV4.Http
 
                     // Stream Checks =================================================================
 
+                    var bufferedStream = new BufferedStream(netStream, GeneralSettings.BufferSize);
 
-                    var request = await Request.TryParseRequest(netStream, Settings.RequestSettings).ConfigureAwait(false);
+                    await ProcessRequest(bufferedStream);
+                }
+            }
+        }
+
+        public async Task ProcessRequest(BufferedStream NetworkStream)
+        {
+            var request = await Request.TryParseRequest(NetworkStream, GeneralSettings.RequestSettings).ConfigureAwait(false);
 
 #if DEBUG
-                    request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
+            request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
 #endif
 
-                    ExecutedCommand executedCommand = null;
+            ExecutedCommand executedCommand = null;
 
-                    var response = new Response(Settings.ResponseSettings, netStream);
+            var response = new Response(GeneralSettings.ResponseSettings, NetworkStream);
 
-                    if (request.ParseErrors.Count > 0)
-                    {
-                        executedCommand = GetEndpoint(SpecialEndpoint.BadRequest);
-                        request.Params.Add("ParseErrors", request.ParseErrors);
-                    }
+            if (request.ParseErrors.Count > 0)
+            {
+                executedCommand = GetEndpoint(SpecialEndpoint.BadRequest);
+                request.Params.Add("ParseErrors", request.ParseErrors);
+            }
 
-                    if (executedCommand is null)
-                    {
-                        // parse went right, here we find what we should do
-                        executedCommand = GetEndpoint(request);
-                    }
+            if (executedCommand is null)
+            {
+                // parse went right, here we find what we should do
+                executedCommand = GetEndpoint(request);
+            }
 
-                    if (executedCommand is null)
-                    {
-                        // we didn't find what we should do
-                        executedCommand = GetEndpoint(SpecialEndpoint.NotFound);
-                        request.Params.Add(nameof(Request), request);
-                    }
+            if (executedCommand is null)
+            {
+                // we didn't find what we should do
+                executedCommand = GetEndpoint(SpecialEndpoint.NotFound);
+                request.Params.Add(nameof(Request), request);
+            }
 
-                    var middleware = ContextBuilder.CreateContext(executedCommand, MiddlewareType, request, response, ServiceProvider);
+            var middleware = ContextBuilder.CreateContext(executedCommand, MiddlewareType, request, response, ServiceProvider);
 
-                    try
-                    {
-                        var temp = await middleware.ActionExecuting(executedCommand);
+            try
+            {
+                var temp = await middleware.ActionExecuting(executedCommand);
 
-                        await response.WriteBodyAsync(temp);
-                    }
-                    catch (IOException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        executedCommand = GetEndpoint(SpecialEndpoint.InternalServerError);
+                await response.WriteBodyAsync(temp);
+            }
+            catch (IOException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                executedCommand = GetEndpoint(SpecialEndpoint.InternalServerError);
 
-                        request.Params.Add(nameof(Exception), ex);
+                request.Params.Add(nameof(Exception), ex);
 
-                        var temp = await middleware.ActionExecuting(executedCommand);
+                var temp = await middleware.ActionExecuting(executedCommand);
 
-                        await response.WriteBodyAsync(temp);
-                    }
-                }
+                await response.WriteBodyAsync(temp);
             }
         }
     }

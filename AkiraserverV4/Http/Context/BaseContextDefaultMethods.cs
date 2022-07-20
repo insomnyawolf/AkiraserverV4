@@ -9,23 +9,23 @@ namespace AkiraserverV4.Http.Context
     public partial class BaseContext
     {
         [BadRequestHandler]
-        public virtual async Task<Exception> BadRequest(Exception exception)
+        public virtual Exception BadRequest(Exception exception)
         {
-            Response.Status = HttpStatus.BadRequest;
+            Response.HttpResponseHeaders.Status = HttpStatus.BadRequest;
             return exception;
         }
 
         [NotFoundHandler]
-        public virtual async Task<string> NotFound(Request request)
+        public virtual string NotFound(Request request)
         {
-            Response.Status = HttpStatus.NotFound;
+            Response.HttpResponseHeaders.Status = HttpStatus.NotFound;
             return "404 NotFound";
         }
 
         [InternalServerErrorHandler]
-        public virtual async Task<Exception> InternalServerError(Exception exception)
+        public virtual Exception InternalServerError(Exception exception)
         {
-            Response.Status = HttpStatus.InternalServerError;
+            Response.HttpResponseHeaders.Status = HttpStatus.InternalServerError;
             return exception;
         }
     }

@@ -3,14 +3,14 @@
     "Port": 80,
     "ExclusiveAddressUse": false,
     "Ttl": 128,
-    "UseOnlyOverlappedIO": false,
+    "BufferSize": 8192,
     "RequestSettings": {
       "ReciveTimeout": 100,
       "ReadPacketSize": 8192
     },
     "ResponseSettings": {
       "SendTimeout": 100,
-      "StaticResponseHeaders": {
+      "StaticHttpResponseHeaders": {
         "Access-Control-Allow-Origin": "*"
       }
     }

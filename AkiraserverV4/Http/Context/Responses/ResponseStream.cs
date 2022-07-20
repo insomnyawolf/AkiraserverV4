@@ -9,18 +9,13 @@ namespace AkiraserverV4.Http.Context.Responses
 {
     public partial class Response
     {
-        public NetworkStream NetworkStream { get; private set; }
-        public StreamWriter StreamWriter { get; private set; }
-
-        private bool HeadersWritten;
-
         internal async Task WriteBodyAsync(ExecutionStatus executionStatus)
         {
             if (executionStatus.ReturnType == ReturnType.Void)
             {
-                if (Status == HttpStatus.Ok)
+                if (HttpResponseHeaders.Status == HttpStatus.Ok)
                 {
-                    Status = HttpStatus.NoContent;
+                    HttpResponseHeaders.Status = HttpStatus.NoContent;
                 }
                 await WriteHeaders();
             }
@@ -55,7 +50,7 @@ namespace AkiraserverV4.Http.Context.Responses
         {
             if (!HeadersWritten)
             {
-                var headersString = ProcessHeaders();
+                var headersString = HttpResponseHeaders.Serialize();
 
                 await StreamWriter.WriteAsync(headersString);
 
@@ -82,16 +77,6 @@ namespace AkiraserverV4.Http.Context.Responses
             await StreamWriter.WriteAsync(input);
             await StreamWriter.FlushAsync();
         }
-
-        //public void WriteDataAsync(byte[] data)
-        //{
-        //    AddContentType(ContentType.Binary);
-        //    AddContentLenght(data.Length);
-
-        //    WriteHeaders();
-
-        //    StreamWriter.WriteAsync(data);
-        //}
 
         public async Task WriteDataAsync(Stream data)
         {
