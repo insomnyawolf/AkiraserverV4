@@ -37,13 +37,12 @@ namespace AkiraserverV4.Http
                     {
                         MethodInfo currentMethod = methods[methodIndex];
 
-                        var Attributes = currentMethod.GetCustomAttributes().ToArray();
+                        var Attributes = currentMethod.GetCustomAttributes();
 
-                        for (int index = 0; index < Attributes.Length; index++)
+                        foreach (var attribute in Attributes)
                         {
-                            var currentAttribute = Attributes[index];
 
-                            if (currentAttribute is BaseEndpointAttribute endpointAttribute)
+                            if (attribute is BaseEndpointAttribute endpointAttribute)
                             {
                                 string controllerPath = controllerAttribute.Path.Replace("[controller]", currentClass.Name.RemoveSuffix("Context"));
                                 if (string.IsNullOrEmpty(controllerPath))
@@ -56,6 +55,7 @@ namespace AkiraserverV4.Http
                                 {
                                     methodPath = '/' + currentMethod.Name;
                                 }
+
                                 string path = controllerPath + methodPath;
 
 #warning no more than one not found/badrequest/exception methods
@@ -65,21 +65,21 @@ namespace AkiraserverV4.Http
                                     Method = endpointAttribute.Method,
                                     Path = path,
                                     Priority = CalculatePriority(path),
-                                    Attributes = Attributes,
+                                    Attributes = Attributes.ToArray(),
                                     SpecialEndpoint = getTypeOfSpecialEndpoint(),
                                 });
 
                                 SpecialEndpoint getTypeOfSpecialEndpoint()
                                 {
-                                    if (currentAttribute is BadRequestHandlerAttribute)
+                                    if (attribute is BadRequestHandlerAttribute)
                                     {
                                         return SpecialEndpoint.BadRequest;
                                     }
-                                    if (currentAttribute is NotFoundHandlerAttribute)
+                                    if (attribute is NotFoundHandlerAttribute)
                                     {
                                         return SpecialEndpoint.NotFound;
                                     }
-                                    if (currentAttribute is InternalServerErrorHandlerAttribute)
+                                    if (attribute is InternalServerErrorHandlerAttribute)
                                     {
                                         return SpecialEndpoint.InternalServerError;
                                     }
@@ -113,9 +113,7 @@ namespace AkiraserverV4.Http
 
             ValidateRouting(ref Endpoints);
 
-            var routungInfo = LogRoutingInfo();
-
-            Logger.LogInformation(routungInfo);
+            Logger?.LogInformation(LogRoutingInfo());
         }
 
         private class EndpointCount

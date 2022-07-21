@@ -204,7 +204,7 @@ namespace AkiraserverV4.Http
             }
             catch (IOException)
             {
-                throw;
+                // dropped connections and such i guess
             }
             catch (Exception ex)
             {
