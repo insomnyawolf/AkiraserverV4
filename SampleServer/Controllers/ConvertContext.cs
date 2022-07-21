@@ -13,7 +13,7 @@ namespace SampleServer
     public class ConvertContext : CustomBaseContext
     {
         [Post("/[method]")]
-        public async Task<object> UrlEncoded()
+        public async Task<JsonResult> UrlEncoded()
         {
             return new JsonResult(Request.Params);
         }

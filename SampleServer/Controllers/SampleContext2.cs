@@ -23,5 +23,11 @@ namespace SampleServer
         {
             return "Meme";
         }
+
+        [Get("/[method]")]
+        public static string StaticTest()
+        {
+            return nameof(StaticTest);
+        }
     }
 }

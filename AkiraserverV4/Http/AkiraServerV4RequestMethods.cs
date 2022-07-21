@@ -13,7 +13,7 @@ namespace AkiraserverV4.Http
                 return null;
             }
 
-            for (int index = 0; index < Endpoints.Length; index++)
+            for (int index = 0; index < Endpoints.Count; index++)
             {
                 Endpoint currentEndpoint = Endpoints[index];
 
@@ -27,7 +27,7 @@ namespace AkiraserverV4.Http
 
         private ExecutedCommand GetEndpoint(SpecialEndpoint specialEndpoint)
         {
-            for (int index = 0; index < Endpoints.Length; index++)
+            for (int index = 0; index < Endpoints.Count; index++)
             {
                 Endpoint currentEndpoint = Endpoints[index];
 

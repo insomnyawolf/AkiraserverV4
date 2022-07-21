@@ -26,7 +26,7 @@ namespace AkiraserverV4.Http.Model
     // What to execute
     public class ExecutedCommand
     {
-        public ParameterInfo[] ParameterInfo { get; set; }
+        public ParameterInfo[] ParameterInfos => ReflectedDelegate.ParameterInfos;
         public ReflectedDelegate ReflectedDelegate { get; set; }
         public Attribute[] Attributes { get; set; }
     }

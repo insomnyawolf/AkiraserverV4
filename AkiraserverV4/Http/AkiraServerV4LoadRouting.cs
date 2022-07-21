@@ -14,7 +14,7 @@ namespace AkiraserverV4.Http
 {
     public partial class AkiraServerV4
     {
-        private Endpoint[] Endpoints;
+        private List<Endpoint> Endpoints = new List<Endpoint>();
 
         public void LoadRouting(Assembly assembly)
         {
@@ -23,8 +23,6 @@ namespace AkiraserverV4.Http
                 return;
             }
 
-            var endpoints = new List<Endpoint>();
-
             Type[] classes = assembly.GetTypes();
             for (int classIndex = 0; classIndex < classes.Length; classIndex++)
             {
@@ -32,7 +30,9 @@ namespace AkiraserverV4.Http
                 ControllerAttribute controllerAttribute = currentClass.GetCustomAttribute<ControllerAttribute>();
                 if (controllerAttribute != null)
                 {
-                    MethodInfo[] methods = currentClass.GetMethods();
+                    const BindingFlags searchType = BindingFlags.DeclaredOnly | BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public;
+
+                    MethodInfo[] methods = currentClass.GetMethods(searchType);
                     for (int methodIndex = 0; methodIndex < methods.Length; methodIndex++)
                     {
                         MethodInfo currentMethod = methods[methodIndex];
@@ -59,9 +59,8 @@ namespace AkiraserverV4.Http
                                 string path = controllerPath + methodPath;
 
 #warning no more than one not found/badrequest/exception methods
-                                endpoints.Add(new Endpoint()
+                                Endpoints.Add(new Endpoint()
                                 {
-                                    ParameterInfo = currentMethod.GetParameters().ToArray(),
                                     ReflectedDelegate = currentMethod.CreateReflectedDelegate(),
                                     Method = endpointAttribute.Method,
                                     Path = path,
@@ -98,7 +97,7 @@ namespace AkiraserverV4.Http
             }
 
             // Ordena los endpoints de mas especificos a menos especificos
-            endpoints.Sort((x, y) =>
+            Endpoints.Sort((x, y) =>
             {
                 if (x.Priority > y.Priority)
                 {
@@ -112,9 +111,7 @@ namespace AkiraserverV4.Http
                 return 0; // equal
             });
 
-            ValidateRouting(ref endpoints);
-
-            Endpoints = endpoints.ToArray();
+            ValidateRouting(ref Endpoints);
 
             var routungInfo = LogRoutingInfo();
 

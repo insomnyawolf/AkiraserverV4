@@ -24,7 +24,7 @@ namespace AkiraserverV4.Http
         private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
         private readonly GeneralSettings GeneralSettings;
-        private Type MiddlewareType { get; set; }
+        private BaseMiddleware Middleware { get; set; }
 
         public AkiraServerV4(IServiceProvider serviceProvider)
         {
@@ -101,9 +101,19 @@ namespace AkiraserverV4.Http
             IsListening = false;
         }
 
-        public void SetMiddleware<T>() where T : BaseMiddleware
+        public void SetMiddleware<T>() where T : BaseMiddleware, new()
         {
-            MiddlewareType = typeof(T);
+            Middleware = new T();
+        }
+
+        public void SetMiddleware<T>(T instance) where T : BaseMiddleware
+        {
+            if (instance is null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
+            Middleware = instance;
         }
 
         public async Task ServeNext()
@@ -179,11 +189,11 @@ namespace AkiraserverV4.Http
                 request.Params.Add(nameof(Request), request);
             }
 
-            var middleware = ContextBuilder.CreateContext(executedCommand, MiddlewareType, request, response, ServiceProvider);
+            var context = ContextBuilder.CreateContext(executedCommand, request, response, ServiceProvider);
 
             try
             {
-                var temp = await middleware.ActionExecuting(executedCommand);
+                var temp = await Middleware.ActionExecuting(context, request, executedCommand);
 
                 if (response.HttpResponseHeaders.Status == HttpStatus.Unset)
                 {
@@ -204,7 +214,7 @@ namespace AkiraserverV4.Http
 
                 request.Params.Add(nameof(Exception), ex);
 
-                var temp = await middleware.ActionExecuting(executedCommand);
+                var temp = await Middleware.ActionExecuting(context, request, executedCommand);
 
                 await response.WriteBodyAsync(temp);
             }

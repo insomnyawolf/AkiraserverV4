@@ -12,16 +12,9 @@ namespace AkiraserverV4.Http
 {
     public class BaseMiddleware
     {
-        public BaseContext Context { get; set; }
-
-        public virtual Task<ExecutionStatus> ActionExecuting(ExecutedCommand executedCommand)
+        public virtual async Task<ExecutionStatus> ActionExecuting(BaseContext context, Request request, ExecutedCommand executedCommand)
         {
-            return InvokeNamedParams(Context, executedCommand);
-        }
-
-        public static async Task<ExecutionStatus> InvokeNamedParams(BaseContext context, ExecutedCommand executedCommand)
-        {
-            var parameters = await MapParameters(executedCommand, context.Request);
+            var parameters = await MapParameters(executedCommand, request);
 
             return await Invoke(executedCommand: executedCommand, context: context, parameters: parameters);
         }
@@ -29,10 +22,10 @@ namespace AkiraserverV4.Http
         public static async Task<object[]> MapParameters(ExecutedCommand executedCommand, Request request)
         {
 #warning rework invoke with named params
-            object[] parameters = new object[executedCommand.ParameterInfo.Length];
+            object[] parameters = new object[executedCommand.ParameterInfos.Length];
             for (int parameterIndex = 0; parameterIndex < parameters.Length; ++parameterIndex)
             {
-                ParameterInfo currentParam = executedCommand.ParameterInfo[parameterIndex];
+                ParameterInfo currentParam = executedCommand.ParameterInfos[parameterIndex];
                 // If object type should try to get the value of the body (json/xml/form) else map query parameters into it
 
                 if (request.HttpHeaders?.ContainsKey(HeaderNames.ContentType) == true)
@@ -63,7 +56,7 @@ namespace AkiraserverV4.Http
                     continue;
                 }
 
-                if (!TypeConverter.ConvertTo(valueRaw, executedCommand.ParameterInfo[parameterIndex].ParameterType, out dynamic value))
+                if (!TypeConverter.ConvertTo(valueRaw, executedCommand.ParameterInfos[parameterIndex].ParameterType, out dynamic value))
                 {
                     // something failed use bad request here maybe?
                 }
