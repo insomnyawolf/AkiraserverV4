@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -8,6 +11,7 @@ namespace AkiraserverV4.Http.Context.Requests
 {
     public partial class Request
     {
+        private static readonly ArrayPool<byte> ArrayPool = ArrayPool<byte>.Shared;
         //private static readonly int[] HttpDelimiterBinary = HttpDelimiterBinaryInit();
 
         //private static int[] HttpDelimiterBinaryInit()
@@ -26,10 +30,10 @@ namespace AkiraserverV4.Http.Context.Requests
 #if DEBUG
         [System.Text.Json.Serialization.JsonIgnore]
 #endif
-        public MemoryStream Body { get; set; }
+        public MemoryStream Body { get; set; } = new MemoryStream();
         public Dictionary<string, dynamic> Params { get; private set; } = new Dictionary<string, dynamic>();
 
-        public static async Task<Request> TryParseRequest(BufferedStream networkStream, RequestSettings settings)
+        public static Request TryParseRequest(NetworkStream networkStream, RequestSettings settings)
         {
             if (networkStream is null)
             {
@@ -38,55 +42,60 @@ namespace AkiraserverV4.Http.Context.Requests
 
             var request = new Request();
 
-            byte[] currentBuffer = new byte[settings.ReadPacketSize];
+            var buffer = ArrayPool.Rent(settings.ReadPacketSize);
 
-            int dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer);
+            var dataRead = networkStream.Read(buffer);
 
-            if (dataRead < 1)
-            {
-                request.ParseErrors.Add("Empty request");
-                return request;
-            }
+            var data = buffer.AsSpan(0, dataRead);
 
-            Array.Resize(ref currentBuffer, dataRead);
+            request.ParseFirstPacket(data);
 
-            request.ParseFirstPacket(currentBuffer);
+            ArrayPool.Return(buffer);
+
+            request.ParseUrlQuery();
 
             if (request.HttpHeaders is null)
             {
                 return request;
             }
 
-            long? bodySize = null;
+            long maxBodySize;
 
             if (request.HttpHeaders.ContainsKey(HeaderNames.ContentLength))
             {
-                bodySize = long.Parse(request.HttpHeaders[HeaderNames.ContentLength]);
+                maxBodySize = long.Parse(request.HttpHeaders[HeaderNames.ContentLength]);
             }
-
-            int remeaning = settings.ReadPacketSize;
-
-            while (remeaning > 0 && dataRead > 0)
+            else
             {
-                if (bodySize.HasValue)
-                {
-                    remeaning = (int)(bodySize.Value - request.Body.Position);
-
-                    if (remeaning > settings.ReadPacketSize)
-                    {
-                        remeaning = settings.ReadPacketSize;
-                    }
-                }
-
-                dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer);
-
-                if (dataRead > 0)
-                {
-                    await request.Body.WriteAsync(currentBuffer, 0, dataRead).ConfigureAwait(false);
-                }
+                maxBodySize = 0;
             }
 
-            request.ParseUrlQuery();
+            int remeaning = (int)(maxBodySize - (request.Body.Position + 1));
+
+            if (remeaning < 1)
+            {
+                return request;
+            }
+
+            if (remeaning > settings.ReadPacketSize)
+            {
+                remeaning = settings.ReadPacketSize;
+            }
+
+            var currentBuffer = ArrayPool.Rent(remeaning);
+
+            dataRead = networkStream.Read(currentBuffer);
+
+            if (dataRead < 1)
+            {
+                ArrayPool.Return(currentBuffer);
+                // no more data available
+                return request;
+            }
+
+            request.Body.Write(currentBuffer, 0, dataRead);
+
+            ArrayPool.Return(currentBuffer);
 
             return request;
         }
@@ -126,7 +135,7 @@ namespace AkiraserverV4.Http.Context.Requests
             DeserializeUrlEncodedQuery(await ReadStringPayloadAsync().ConfigureAwait(false));
         }
 
-        private void ParseFirstPacket(byte[] data)
+        private void ParseFirstPacket(Span<byte> data)
         {
             var headerEnding = HttpHeaders.Parse(data, ParseErrors);
 
@@ -135,11 +144,9 @@ namespace AkiraserverV4.Http.Context.Requests
                 return;
             }
 
-            Body = new MemoryStream();
-
             if (headerEnding < data.Length)
             {
-                Body.Write(data, headerEnding, data.Length - headerEnding);
+                Body.Write(data.Slice(headerEnding, data.Length - headerEnding));
             }
         }
     }

@@ -2,18 +2,19 @@
 using AkiraserverV4.Http.Helper;
 using System.Text;
 using System.IO;
+using System.Net.Sockets;
 
 namespace AkiraserverV4.Http.Context.Responses
 {
     public partial class Response
     {
         public HttpResponseHeaders HttpResponseHeaders { get; set; }
-        public BufferedStream NetworkStream { get; private set; }
+        public NetworkStream NetworkStream { get; private set; }
         public StreamWriter StreamWriter { get; private set; }
 
         private bool HeadersWritten;
 
-        public Response(ResponseSettings settings, BufferedStream NetworkStream)
+        public Response(ResponseSettings settings, NetworkStream NetworkStream)
         {
             this.NetworkStream = NetworkStream;
             this.StreamWriter = new StreamWriter(NetworkStream, Encoding.UTF8);

@@ -1,6 +1,7 @@
 ﻿using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Helper;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -16,7 +17,7 @@ namespace AkiraserverV4.Http.Context
         public string Path { get; set; }
         public HttpVersion ProtocolVersion { get; set; }
 
-        public int Parse(byte[] Data, List<string> ParseErrors)
+        public int Parse(Span<byte> data, List<string> ParseErrors)
         {
             int headerEnding = 0;
 
@@ -24,36 +25,36 @@ namespace AkiraserverV4.Http.Context
 
             char[] checkGroup = new char[HttpDelimiter.Length];
 
-            for (int indexData = 0; indexData < Data.Length; indexData++)
+            for (int indexData = 0; indexData < data.Length; indexData++)
             {
                 for (int i = 1; i < checkGroup.Length; i++)
                 {
                     checkGroup[i - 1] = checkGroup[i];
                 }
 
-                char currentChar = (char)Data[indexData];
+                char currentChar = (char)data[indexData];
 
                 checkGroup[^1] = currentChar;
-                
+
                 headersRaw.Append(currentChar);
 
                 if (HttpDelimiter.PatternEquals(checkGroup))
                 {
-                    headerEnding = indexData;
+                    headerEnding = indexData + 1;
                     break;
                 }
             }
 
             var RequestReader = new StringReader(headersRaw.ToString());
 
-            string data = RequestReader.ReadLine();
+            string dataString = RequestReader.ReadLine();
 
-            if (string.IsNullOrEmpty(data))
+            if (string.IsNullOrEmpty(dataString))
             {
                 ParseErrors.Add("Invalid request, no headers were provided.");
             }
 
-            string[] firstLine = data.Split(' ');
+            string[] firstLine = dataString.Split(' ');
 
             if (firstLine.Length != 3)
             {

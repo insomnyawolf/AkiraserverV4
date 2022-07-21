@@ -9,7 +9,7 @@ namespace AkiraserverV4.Http.Context
     {
         public Request Request { get; private set; }
         public Response Response { get; private set; }
-        public BufferedStream NetworkStream => Response.NetworkStream;
+        public NetworkStream NetworkStream => Response.NetworkStream;
         public BaseContext() { }
     }
 }
