@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -102,23 +101,49 @@ namespace AkiraserverV4.Http
 
             Logger.LogInformation($"Now Listening on '{TcpListener.LocalEndpoint}'...");
 
-            
+//            await Parallel.ForEachAsync(TcpListener, async (TcpClient, CancelationToken) =>
+//            {
+//                try
+//                {
+//                    await ServeNext(TcpClient);
+//                }
+//                catch (Exception e) when (e is SocketException || e is IOException)
+//                {
+//#if DEBUG
+//                    Logger.LogError(e.ToString());
+//#endif
+//                }
+//            });
 
-            //await Parallel.ForEachAsync(TcpListener, new ParallelOptions() { }, async (TcpClient, CncelationToken) =>
-            //{
-                
-            //});
-
+//            while (IsListening)
+//            {
+//                try
+//                {
+//                    var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
+//                    ThreadPool.UnsafeQueueUserWorkItem(async (client) =>
+//                    {
+//                        await ServeNext(client);
+//                    }, TcpClient, preferLocal: false);
+//                }
+//                catch (Exception e) when (e is SocketException || e is IOException)
+//                {
+//#if DEBUG
+//                    Logger.LogError(e.ToString());
+//#endif
+//                }
+//            }
 
             while (IsListening)
             {
                 try
                 {
-                    var TcpClient = await TcpListener.AcceptTcpClientAsync();
-                    ThreadPool.QueueUserWorkItem(async (client) =>
+                    var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
+
+
+                    _ = Task.Run(async() =>
                     {
-                        await ServeNext(client);
-                    }, TcpClient, preferLocal:false);
+                        await ServeNext(TcpClient);
+                    });
                 }
                 catch (Exception e) when (e is SocketException || e is IOException)
                 {
