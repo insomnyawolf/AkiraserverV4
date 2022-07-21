@@ -119,7 +119,7 @@ namespace AkiraserverV4.Http
 //            {
 //                try
 //                {
-//                    var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
+//                    using var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
 //                    ThreadPool.UnsafeQueueUserWorkItem(async (client) =>
 //                    {
 //                        await ServeNext(client);
@@ -139,10 +139,12 @@ namespace AkiraserverV4.Http
                 {
                     var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
 
-
                     _ = Task.Run(async() =>
                     {
                         await ServeNext(TcpClient);
+
+                        TcpClient.Close();
+                        TcpClient.Dispose();
                     });
                 }
                 catch (Exception e) when (e is SocketException || e is IOException)
