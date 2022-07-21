@@ -42,6 +42,12 @@ namespace AkiraserverV4.Http.Context.Requests
 
             int dataRead = await networkStream.ReadAsyncWithTimeout(currentBuffer);
 
+            if (dataRead < 1)
+            {
+                request.ParseErrors.Add("Empty request");
+                return request;
+            }
+
             Array.Resize(ref currentBuffer, dataRead);
 
             request.ParseFirstPacket(currentBuffer);

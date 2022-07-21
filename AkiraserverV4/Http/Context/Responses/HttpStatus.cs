@@ -73,6 +73,9 @@ namespace AkiraserverV4.Http.Context.Responses
 
     public enum HttpStatus
     {
+        //Custom status internally used
+        Unset = -1,
+
         // Ok
 
         Ok = 200,

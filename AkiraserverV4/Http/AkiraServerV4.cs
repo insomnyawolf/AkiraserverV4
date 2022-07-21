@@ -135,7 +135,7 @@ namespace AkiraserverV4.Http
 
                     // Stream Checks =================================================================
 
-                    var bufferedStream = new BufferedStream(netStream, GeneralSettings.BufferSize);
+                    using var bufferedStream = new BufferedStream(netStream, GeneralSettings.BufferSize);
 
                     await ProcessRequest(bufferedStream);
                 }
@@ -157,6 +157,9 @@ namespace AkiraserverV4.Http
             if (request.ParseErrors.Count > 0)
             {
                 executedCommand = GetEndpoint(SpecialEndpoint.BadRequest);
+
+                response.HttpResponseHeaders.Status = HttpStatus.BadRequest;
+
                 request.Params.Add("ParseErrors", request.ParseErrors);
             }
 
@@ -170,6 +173,9 @@ namespace AkiraserverV4.Http
             {
                 // we didn't find what we should do
                 executedCommand = GetEndpoint(SpecialEndpoint.NotFound);
+
+                response.HttpResponseHeaders.Status = HttpStatus.NotFound;
+
                 request.Params.Add(nameof(Request), request);
             }
 
@@ -178,6 +184,11 @@ namespace AkiraserverV4.Http
             try
             {
                 var temp = await middleware.ActionExecuting(executedCommand);
+
+                if (response.HttpResponseHeaders.Status == HttpStatus.Unset)
+                {
+                    response.HttpResponseHeaders.Status = HttpStatus.Ok;
+                }
 
                 await response.WriteBodyAsync(temp);
             }
@@ -189,11 +200,17 @@ namespace AkiraserverV4.Http
             {
                 executedCommand = GetEndpoint(SpecialEndpoint.InternalServerError);
 
+                response.HttpResponseHeaders.Status = HttpStatus.InternalServerError;
+
                 request.Params.Add(nameof(Exception), ex);
 
                 var temp = await middleware.ActionExecuting(executedCommand);
 
                 await response.WriteBodyAsync(temp);
+            }
+            finally
+            {
+                await NetworkStream.FlushAsync();
             }
         }
     }

@@ -82,7 +82,7 @@ namespace AkiraserverV4.Http.Context
 
     public class HttpResponseHeaders : HttpHeaders
     {
-        public HttpStatus Status { get; set; }
+        public HttpStatus Status { get; set; } = HttpStatus.Unset;
 
         public string Serialize()
         {
