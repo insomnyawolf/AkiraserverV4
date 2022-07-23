@@ -5,6 +5,7 @@ using AkiraserverV4.Http.SerializeHelpers;
 using Extensions.Reflection;
 using System;
 using System.Reflection;
+using System.Runtime.Remoting;
 using System.Threading.Tasks;
 
 
@@ -67,19 +68,35 @@ namespace AkiraserverV4.Http
                     continue;
                 }
 
-                if (!request.Params.TryGetValue(currentParam.Name, out var valueRaw))
+                dynamic rawValue = default;
+
+                var name = currentParam.Name.ToLower();
+
+                foreach (var kv in request.Params)
                 {
-                    // no value here
-                    parameters[parameterIndex] = default;
+                    if (kv.Key.ToLower() == name)
+                    {
+                        rawValue = kv.Value;
+                        break;
+                    }
+                }
+
+                var type = rawValue?.GetType();
+
+                var parameterType = executedCommand.ParameterInfos[parameterIndex].ParameterType;
+
+                if (parameterType.IsAssignableFrom(type))
+                {
+                    parameters[parameterIndex] = rawValue;
                     continue;
                 }
 
-                if (!TypeConverter.ConvertTo(valueRaw, executedCommand.ParameterInfos[parameterIndex].ParameterType, out dynamic value))
+                if (!TypeConverter.ConvertTo(rawValue, parameterType, out dynamic convertedValue))
                 {
                     // something failed use bad request here maybe?
                 }
 
-                parameters[parameterIndex] = value;
+                parameters[parameterIndex] = convertedValue;
             }
 
             return parameters;

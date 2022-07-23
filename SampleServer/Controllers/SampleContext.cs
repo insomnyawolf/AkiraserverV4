@@ -19,6 +19,12 @@ namespace SampleServer
         }
 
         [Get("/[method]")]
+        public Task<string> Exception()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Get("/[method]")]
         public Task<string> Count()
         {
             return Task.FromResult($"Hello!\n{DateTime.Now}\nRequest: {Service.RequestNumber()}");

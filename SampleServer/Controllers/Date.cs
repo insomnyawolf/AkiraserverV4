@@ -7,7 +7,7 @@ namespace SampleServer
     public class Date : CustomBaseContext
     {
         [Get]
-        public string Now(bool IsShort, string random)
+        public string Now(bool IsShort, string random, int value)
         {
             if (IsShort)
             {

@@ -58,6 +58,12 @@ namespace AkiraserverV4.Http.Context
                 ParseErrors.Add("Invalid request, no headers were provided.");
             }
 
+            if (headers.Length < 1)
+            {
+                ParseErrors.Add("First header where verb, path and http version should be is invalid.");
+                return -1;
+            }
+
             string[] firstLine = headers[0].Split(' ');
 
             if (firstLine.Length != 3)
