@@ -1,7 +1,9 @@
 ﻿using AkiraserverV4.Http.Context.Requests;
 using AkiraserverV4.Http.Context.Responses;
 using AkiraserverV4.Http.Helper;
+using Microsoft.Extensions.ObjectPool;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -12,6 +14,10 @@ namespace AkiraserverV4.Http.Context
     {
         public const string HeaderSeparator = "\r\n";
         private static readonly char[] HttpDelimiter = "\r\n\r\n".ToCharArray();
+        private static readonly int CheckGroupLastPosition = HttpDelimiter.Length - 1;
+
+        private static readonly DefaultObjectPoolProvider DefaultObjectPoolProvider = new DefaultObjectPoolProvider();
+        private static readonly ObjectPool<StringBuilder> StringBuilderPool = DefaultObjectPoolProvider.CreateStringBuilderPool();
 
         public HttpMethod Method { get; set; }
         public string Path { get; set; }
@@ -21,7 +27,7 @@ namespace AkiraserverV4.Http.Context
         {
             int headerEnding = 0;
 
-            var headersRaw = new StringBuilder();
+            var headersRaw = StringBuilderPool.Get();
 
             char[] checkGroup = new char[HttpDelimiter.Length];
 
@@ -34,7 +40,7 @@ namespace AkiraserverV4.Http.Context
 
                 char currentChar = (char)data[indexData];
 
-                checkGroup[^1] = currentChar;
+                checkGroup[CheckGroupLastPosition] = currentChar;
 
                 headersRaw.Append(currentChar);
 
@@ -45,16 +51,14 @@ namespace AkiraserverV4.Http.Context
                 }
             }
 
-            var RequestReader = new StringReader(headersRaw.ToString());
+            var headers = headersRaw.ToString().Split(HeaderSeparator, StringSplitOptions.RemoveEmptyEntries);
 
-            string dataString = RequestReader.ReadLine();
-
-            if (string.IsNullOrEmpty(dataString))
+            if (headers.Length < 1)
             {
                 ParseErrors.Add("Invalid request, no headers were provided.");
             }
 
-            string[] firstLine = dataString.Split(' ');
+            string[] firstLine = headers[0].Split(' ');
 
             if (firstLine.Length != 3)
             {
@@ -65,17 +69,21 @@ namespace AkiraserverV4.Http.Context
             Path = firstLine[1];
             ProtocolVersion = HttpVersionConvert.FromString(firstLine[2]);
 
-            string currentHeader;
-            while (!string.IsNullOrWhiteSpace(currentHeader = RequestReader.ReadLine()))
+            for (int index = 1; index < headers.Length; index++)
             {
-                string[] header = currentHeader.Split(": ");
+                var current = headers[index];
+
+                string[] header = current.Split(": ");
                 if (header.Length != 2)
                 {
-                    ParseErrors.Add($"The header: '{currentHeader}' contain more than 2 parts.");
+                    ParseErrors.Add($"The header: '{current}' contain more than 2 parts.");
                     continue;
                 }
+
                 Add(header[0], header[1]);
             }
+
+            StringBuilderPool.Return(headersRaw);
 
             return headerEnding;
         }
@@ -87,24 +95,26 @@ namespace AkiraserverV4.Http.Context
 
         public string Serialize()
         {
-            StringBuilder headerBuilder = new StringBuilder();
+            var headerBuilder = new StringBuilder();
             headerBuilder.Append(ProtocolVersion.ToVersionString());
             headerBuilder.Append(' ');
             headerBuilder.Append(Status.ToStatusString());
             headerBuilder.Append(HeaderSeparator);
+
+            if (Status == HttpStatus.NoContent)
+            {
+                headerBuilder.Append(HttpHeaderNames.ContentLength);
+                headerBuilder.Append(':').Append(' ');
+                headerBuilder.Append('0');
+            }
 
             foreach (KeyValuePair<string, string> header in this)
             {
                 string key = header.Key;
                 string value = header.Value;
 
-                if (key == HeaderNames.ContentLength && Status == HttpStatus.NoContent)
-                {
-                    value = "0";
-                }
-
                 headerBuilder.Append(key);
-                headerBuilder.Append(": ");
+                headerBuilder.Append(':').Append(' ');
                 headerBuilder.Append(value);
                 headerBuilder.Append(HeaderSeparator);
             }
@@ -112,6 +122,18 @@ namespace AkiraserverV4.Http.Context
             headerBuilder.Append(HeaderSeparator);
 
             return headerBuilder.ToString();
+        }
+
+        public HttpResponseHeaders DeepClone()
+        {
+            var headers = new HttpResponseHeaders();
+
+            foreach (var header in this)
+            {
+                headers.Add(header.Key, header.Value);
+            }
+
+            return headers;
         }
     }
 }

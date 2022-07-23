@@ -13,25 +13,18 @@ namespace SampleServer.Middlewares
     {
         private static readonly ILogger<Middleware> Logger = Program.ServiceProvider.GetRequiredService<ILogger<Middleware>>();
 
-        public override async Task<ExecutionStatus> ActionExecuting(BaseContext context, Request request, ExecutedCommand executedCommand)
+        protected override async Task<ExecutionStatus> ActionExecuting(BaseContext context, Request request, ExecutedCommand executedCommand)
         {
             ExecutionStatus ExecutionStatus;
-            // Pre execution
-
-            // Execution
             try
             {
-                ExecutionStatus = await base.ActionExecuting(context, request, executedCommand);
+                ExecutionStatus = await Next(context, request, executedCommand);
             }
             catch (Exception ex)
             {
                 Logger.LogError("Exception caught by the middleware", ex);
                 throw;
             }
-
-            // Post execution
-
-            // return value
             return ExecutionStatus;
         }
     }

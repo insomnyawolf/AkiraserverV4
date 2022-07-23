@@ -1,6 +1,6 @@
 ﻿namespace AkiraserverV4.Http.Context
 {
-    public static class HeaderNames
+    public static class HttpHeaderNames
     {
         public const string ContentLength = "Content-Length";
         public const string AccessControlAllowOrigin = "Access-Control-Allow-Origin";

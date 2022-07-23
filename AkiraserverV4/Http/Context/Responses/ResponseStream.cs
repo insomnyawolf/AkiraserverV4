@@ -1,15 +1,15 @@
-﻿using Extensions;
-using AkiraserverV4.Http.Helper;
+﻿using AkiraserverV4.Http.Helper;
 using AkiraserverV4.Http.SerializeHelpers;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Extensions.Reflection;
 
 namespace AkiraserverV4.Http.Context.Responses
 {
     public partial class Response
     {
-        internal async Task WriteBodyAsync(ExecutionStatus executionStatus)
+        internal async ValueTask WriteBodyAsync(ExecutionStatus executionStatus)
         {
             if (executionStatus.ReturnType == ReturnType.Void)
             {
@@ -40,13 +40,16 @@ namespace AkiraserverV4.Http.Context.Responses
             {
                 await SendTextAsync(executionStatus.Value.ToString());
             }
+
+            await StreamWriter.FlushAsync();
+            await NetworkStream.FlushAsync();
         }
 
         /// <summary>
         /// Writes the current headers into the network stream if they were not written before
         /// </summary>
         /// <returns></returns>
-        public async Task WriteHeaders()
+        public async ValueTask WriteHeaders()
         {
             if (!HeadersWritten)
             {
@@ -54,41 +57,41 @@ namespace AkiraserverV4.Http.Context.Responses
 
                 await StreamWriter.WriteAsync(headersString);
 
-                await StreamWriter.FlushAsync();
-
                 HeadersWritten = true;
             }
         }
 
-        internal async Task SendResponseResultAsync<T>(T responseResult) where T : ResponseResult
+        internal async ValueTask SendResponseResultAsync<T>(T responseResult) where T : ResponseResult
         {
             AddContentType(responseResult.ContentType);
+
             await WriteHeaders();
 
             await responseResult.SerializeToNetworkStream(this);
         }
 
-        internal async Task SendTextAsync(string input)
+        internal async ValueTask SendTextAsync(string input)
         {
             AddContentType(ContentType.HTML);
+
             AddContentLenght(input.Length);
 
             await WriteHeaders();
+
             await StreamWriter.WriteAsync(input);
-            await StreamWriter.FlushAsync();
         }
 
-        public async Task WriteDataAsync(Stream data)
+        public async ValueTask WriteDataAsync(Stream data)
         {
             AddContentType(ContentType.Binary);
+
             AddContentLenght(data.Length);
+            
             await WriteHeaders();
 
             // is this really that good?
-
             data.Position = 0;
-            await data.CopyToAsync(NetworkStream).ConfigureAwait(false);
-            await NetworkStream.FlushAsync().ConfigureAwait(false);
+            await data.CopyToAsync(NetworkStream);
         }
     }
 }

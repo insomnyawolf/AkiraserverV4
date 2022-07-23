@@ -7,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -17,30 +16,14 @@ using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http
 {
-    public class TcpListenerEnumerable : TcpListener, IAsyncEnumerable<TcpClient>
-    {
-        public CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
-        public async IAsyncEnumerator<TcpClient> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-        {
-            while (!cancellationToken.IsCancellationRequested && !CancellationTokenSource.IsCancellationRequested)
-            {
-                yield return await AcceptTcpClientAsync();
-            }
-        }
-
-        public TcpListenerEnumerable(IPAddress localaddr, int port) : base (localaddr, port)
-        {
-
-        }
-    }
-
     public partial class AkiraServerV4
     {
+        public CancellationTokenSource CancellationTokenSource { get; } = new CancellationTokenSource();
         private readonly ILogger<AkiraServerV4> Logger;
 
         public bool IsListening { get; private set; }
 
-        private readonly TcpListenerEnumerable TcpListener;
+        private readonly TcpListener TcpListener;
         private readonly IServiceProvider ServiceProvider;
         private readonly GeneralSettings GeneralSettings;
         private BaseMiddleware Middleware { get; set; }
@@ -57,7 +40,7 @@ namespace AkiraserverV4.Http
 
             SetMiddleware<BaseMiddleware>();
 
-            TcpListener = new TcpListenerEnumerable(localaddr: IPAddress.Any, port: GeneralSettings.Port);
+            TcpListener = new TcpListener(localaddr: IPAddress.Any, port: GeneralSettings.Port);
 
             ReloadServerConfig();
         }
@@ -68,8 +51,6 @@ namespace AkiraserverV4.Http
             TcpListener.Server.ReceiveTimeout = GeneralSettings.RequestSettings.ReciveTimeout;
             TcpListener.Server.SendTimeout = GeneralSettings.ResponseSettings.SendTimeout;
             TcpListener.Server.Ttl = GeneralSettings.Ttl;
-            //TcpListener.Server.UseOnlyOverlappedIO = Settings.UseOnlyOverlappedIO;
-            //TcpListener.Server.Blocking = false;
         }
 
         public AkiraServerV4(ServiceProvider serviceProvider, Assembly assembly) : this(serviceProvider)
@@ -91,9 +72,9 @@ namespace AkiraserverV4.Http
                 return;
             }
 
-            if (TcpListener.CancellationTokenSource.IsCancellationRequested)
+            if (CancellationTokenSource.IsCancellationRequested)
             {
-                TcpListener.CancellationTokenSource.TryReset();
+                CancellationTokenSource.TryReset();
             }
 
             TcpListener.Start();
@@ -101,58 +82,29 @@ namespace AkiraserverV4.Http
 
             Logger.LogInformation($"Now Listening on '{TcpListener.LocalEndpoint}'...");
 
-//            await Parallel.ForEachAsync(TcpListener, async (TcpClient, CancelationToken) =>
-//            {
-//                try
-//                {
-//                    await ServeNext(TcpClient);
-//                }
-//                catch (Exception e) when (e is SocketException || e is IOException)
-//                {
-//#if DEBUG
-//                    Logger.LogError(e.ToString());
-//#endif
-//                }
-//            });
+            //while (!CancellationTokenSource.IsCancellationRequested)
+            //{
+            //    var TcpClient = await TcpListener.AcceptTcpClientAsync(CancellationTokenSource.Token);
 
-//            while (IsListening)
-//            {
-//                try
-//                {
-//                    using var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
-//                    ThreadPool.UnsafeQueueUserWorkItem(async (client) =>
-//                    {
-//                        await ServeNext(client);
-//                    }, TcpClient, preferLocal: false);
-//                }
-//                catch (Exception e) when (e is SocketException || e is IOException)
-//                {
-//#if DEBUG
-//                    Logger.LogError(e.ToString());
-//#endif
-//                }
-//            }
+            //    ThreadPool.QueueUserWorkItem(async (client) =>
+            //    {
+            //        await ServeNext(client);
+            //    }, TcpClient, preferLocal: false);
+            //}
 
-            while (IsListening)
+            while (!CancellationTokenSource.IsCancellationRequested)
             {
                 try
                 {
-                    var TcpClient = await TcpListener.AcceptTcpClientAsync(TcpListener.CancellationTokenSource.Token);
+                    TcpClient TcpClient = await TcpListener.AcceptTcpClientAsync(CancellationTokenSource.Token);
 
-                    _ = Task.Run(async() =>
-                    {
-                        await ServeNext(TcpClient);
-
-                        TcpClient.Close();
-                        TcpClient.Dispose();
-                    });
+                    _ = Task.Run(() => ServeNext(TcpClient), CancellationTokenSource.Token);
                 }
-                catch (Exception e) when (e is SocketException || e is IOException)
+                catch
                 {
-#if DEBUG
-                    Logger.LogError(e.ToString());
-#endif
+                    // Discard exceptions caused by clients disconnecting abruptly
                 }
+                
             }
 
             TcpListener.Stop();
@@ -161,7 +113,7 @@ namespace AkiraserverV4.Http
         public void StopListening()
         {
             IsListening = false;
-            TcpListener.CancellationTokenSource.Cancel();
+            CancellationTokenSource.Cancel();
         }
 
         public void SetMiddleware<T>() where T : BaseMiddleware, new()
@@ -179,11 +131,13 @@ namespace AkiraserverV4.Http
             Middleware = instance;
         }
 
-        public async Task ServeNext(TcpClient TcpClient)
+        public async ValueTask ServeNext(TcpClient TcpClient)
         {
             try
             {
+#if DEBUG
                 Logger.LogInformation($"New connection from: {TcpClient.Client.RemoteEndPoint}");
+#endif
                 // Get a stream object for reading and writing
                 using (NetworkStream netStream = TcpClient.GetStream())
                 {
@@ -205,29 +159,30 @@ namespace AkiraserverV4.Http
                         return;
                     }
 
-                    //netStream.ReadTimeout = GeneralSettings.RequestSettings.ReciveTimeout;
-                    //netStream.WriteTimeout = GeneralSettings.ResponseSettings.SendTimeout;
+                    netStream.ReadTimeout = GeneralSettings.RequestSettings.ReciveTimeout;
+                    netStream.WriteTimeout = GeneralSettings.ResponseSettings.SendTimeout;
 
                     // Stream Checks =================================================================
-
-                    //using var bufferedStream = new BufferedStream(netStream, GeneralSettings.BufferSize);
 
                     await ProcessRequest(netStream);
                 }
             }
-            catch (IOException)
+            catch
             {
-                // dropped connections and such i guess
+                // Discard exceptions caused by clients disconnecting abruptly
             }
-
+            finally
+            {
+                TcpClient.Close();
+                TcpClient.Dispose();
+            }
         }
 
-        public async Task ProcessRequest(NetworkStream NetworkStream)
+        public async ValueTask ProcessRequest(NetworkStream NetworkStream)
         {
-            var request = Request.TryParseRequest(NetworkStream, GeneralSettings.RequestSettings);
-
+            var request = await Request.TryParseRequest(NetworkStream, GeneralSettings.RequestSettings);
 #if DEBUG
-            request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
+            //request.LogPacket(ServiceProvider.GetRequiredService<ILogger<Request>>());
 #endif
 
             ExecutedCommand executedCommand = null;
@@ -263,7 +218,7 @@ namespace AkiraserverV4.Http
 
             try
             {
-                var temp = await Middleware.ActionExecuting(context, request, executedCommand);
+                var temp = await Middleware.Next(context, request, executedCommand);
 
                 if (response.HttpResponseHeaders.Status == HttpStatus.Unset)
                 {
@@ -285,7 +240,7 @@ namespace AkiraserverV4.Http
 
                 request.Params.Add(nameof(Exception), ex);
 
-                var temp = await Middleware.ActionExecuting(context, request, executedCommand);
+                var temp = await Middleware.Next(context, request, executedCommand);
 
                 await response.WriteBodyAsync(temp);
             }

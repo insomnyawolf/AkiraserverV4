@@ -2,6 +2,7 @@
 using AkiraserverV4.Http.Exceptions;
 using AkiraserverV4.Http.Model;
 using Extensions;
+using Extensions.Reflection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace AkiraserverV4.Http
 {
     public partial class AkiraServerV4
     {
-        private List<Endpoint> Endpoints = new List<Endpoint>();
+        private List<Endpoint> Endpoints = new();
 
         public void LoadRouting(Assembly assembly)
         {

@@ -1,9 +1,10 @@
-﻿using System;
+﻿using AkiraserverV4.Http.Helper;
+using Microsoft.IO;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -11,7 +12,9 @@ namespace AkiraserverV4.Http.Context.Requests
 {
     public partial class Request
     {
+        private static readonly RecyclableMemoryStreamManager RecyclableMemoryStreamManager = new();
         private static readonly ArrayPool<byte> ArrayPool = ArrayPool<byte>.Shared;
+
         //private static readonly int[] HttpDelimiterBinary = HttpDelimiterBinaryInit();
 
         //private static int[] HttpDelimiterBinaryInit()
@@ -30,10 +33,10 @@ namespace AkiraserverV4.Http.Context.Requests
 #if DEBUG
         [System.Text.Json.Serialization.JsonIgnore]
 #endif
-        public MemoryStream Body { get; set; } = new MemoryStream();
+        public MemoryStream Body { get; set; }
         public Dictionary<string, dynamic> Params { get; private set; } = new Dictionary<string, dynamic>();
 
-        public static Request TryParseRequest(NetworkStream networkStream, RequestSettings settings)
+        public static async Task<Request> TryParseRequest(NetworkStream networkStream, RequestSettings settings)
         {
             if (networkStream is null)
             {
@@ -44,47 +47,61 @@ namespace AkiraserverV4.Http.Context.Requests
 
             var buffer = ArrayPool.Rent(settings.ReadPacketSize);
 
-            var dataRead = networkStream.Read(buffer);
+            var dataRead = await networkStream.ReadAsync(buffer);
 
-            var data = buffer.AsSpan(0, dataRead);
+            var headersEnding = ParseHeaders();
 
-            request.ParseFirstPacket(data);
+            int ParseHeaders()
+            {
+                // SpanWorkaround
+                var data = buffer.AsSpan(0, dataRead);
 
-            ArrayPool.Return(buffer);
+                return request.HttpHeaders.Parse(data, request.ParseErrors);
+            }
+
+            if (request.ParseErrors.Count > 0)
+            {
+                ArrayPool.Return(buffer);
+                return request;
+            }
 
             request.ParseUrlQuery();
 
-            if (request.HttpHeaders is null)
+            if (!request.HttpHeaders.TryGetValue(HttpHeaderNames.ContentLength, out var contentLengthString))
             {
+                ArrayPool.Return(buffer);
+                // if there's no body there's nothing else to parse
                 return request;
             }
 
-            long maxBodySize;
+            var contentLength = long.Parse(contentLengthString);
 
-            if (request.HttpHeaders.ContainsKey(HeaderNames.ContentLength))
+            if (headersEnding < dataRead)
             {
-                maxBodySize = long.Parse(request.HttpHeaders[HeaderNames.ContentLength]);
-            }
-            else
-            {
-                maxBodySize = 0;
+                var length = dataRead - headersEnding;
+                request.Body = RecyclableMemoryStreamManager.GetStream();
+                await request.Body.WriteAsync(buffer, headersEnding, length);
             }
 
-            int remeaning = (int)(maxBodySize - (request.Body.Position + 1));
+            ArrayPool.Return(buffer);
 
-            if (remeaning < 1)
+            int remeaningContentLength = (int)(contentLength - (request.Body.Position + 1));
+
+            if (remeaningContentLength < 1)
             {
+                //everything was read already;
                 return request;
             }
 
-            if (remeaning > settings.ReadPacketSize)
+            if (remeaningContentLength > settings.ReadPacketSize)
             {
-                remeaning = settings.ReadPacketSize;
+                throw new IndexOutOfRangeException("The body of the request exceeds the maximum configured body size");
+                //remeaning = settings.ReadPacketSize;
             }
 
-            var currentBuffer = ArrayPool.Rent(remeaning);
+            var currentBuffer = ArrayPool.Rent(remeaningContentLength);
 
-            dataRead = networkStream.Read(currentBuffer);
+            dataRead = await networkStream.ReadAsync(currentBuffer);
 
             if (dataRead < 1)
             {
@@ -93,7 +110,7 @@ namespace AkiraserverV4.Http.Context.Requests
                 return request;
             }
 
-            request.Body.Write(currentBuffer, 0, dataRead);
+            await request.Body.WriteAsync(currentBuffer, 0, dataRead);
 
             ArrayPool.Return(currentBuffer);
 
@@ -133,21 +150,6 @@ namespace AkiraserverV4.Http.Context.Requests
         public async Task DeserializeUrlEncodedBody()
         {
             DeserializeUrlEncodedQuery(await ReadStringPayloadAsync().ConfigureAwait(false));
-        }
-
-        private void ParseFirstPacket(Span<byte> data)
-        {
-            var headerEnding = HttpHeaders.Parse(data, ParseErrors);
-
-            if (ParseErrors.Count > 0)
-            {
-                return;
-            }
-
-            if (headerEnding < data.Length)
-            {
-                Body.Write(data.Slice(headerEnding, data.Length - headerEnding));
-            }
         }
     }
 }

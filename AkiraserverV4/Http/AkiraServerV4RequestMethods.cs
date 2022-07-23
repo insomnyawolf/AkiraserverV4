@@ -8,11 +8,6 @@ namespace AkiraserverV4.Http
     {
         private ExecutedCommand GetEndpoint(Request request)
         {
-            if (request is null)
-            {
-                return null;
-            }
-
             for (int index = 0; index < Endpoints.Count; index++)
             {
                 Endpoint currentEndpoint = Endpoints[index];

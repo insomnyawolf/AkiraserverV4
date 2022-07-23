@@ -1,8 +1,6 @@
 ﻿using AkiraserverV4.Http.Helper;
+using Extensions;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace AkiraserverV4.Http.Context.Requests
 {
@@ -26,21 +24,6 @@ namespace AkiraserverV4.Http.Context.Requests
     {
         public string Filename { get; set; }
         public ContentType ContentType { get; set; }
-        internal MemoryStream Content 
-        { 
-            set {
-                ContentInternal = value;
-            } 
-        }
-        private MemoryStream ContentInternal;
-        public long StartingPosition { get; internal set; }
-        public long Length { get; internal set; }
-
-        public async Task CopyToAsync(Stream stream)
-        {
-            ContentInternal.Position = StartingPosition;
-            ContentInternal.SetLength(StartingPosition + Length);
-            await ContentInternal.CopyToAsync(stream).ConfigureAwait(false);
-        }
+        public SubStream Content { get; set; }
     }
 }
